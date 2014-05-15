@@ -83,9 +83,11 @@ def roasting(state):
         #         if (GPIO.input(SButton) == 1):
         #             state=7        #brings to pause state for manual advance
         
+        
+        #for demo day
         timeNow=time.time()
         timePass=timeNow-timeStart
-        if timeStart > 90:
+        if timePass > 90:
             # Position servo in up position
             state = 10     #allows for immediate state change to return state
             servoCom="Y"                #set servo to start position
