@@ -72,24 +72,32 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 #===============readSonar===============================================
 #   Takes a reading from a sonar sensor
 def readSonar(sensorTrig, sensorEcho):
-    start=time.time()
+    
     signaloff=0
-    while(signaloff==0):
+    status=1
+    while(signaloff==0) and status==1:
         time.sleep(.01)
         GPIO.output(sensorTrig, True)
         time.sleep(0.00001)
         GPIO.output(sensorTrig, False)
+        signalstart= time.time()
         
-        while GPIO.input(sensorEcho) == 0:
+        while GPIO.input(sensorEcho) == 0 and status==1:
             signaloff = time.time()
-                
-        while GPIO.input(sensorEcho) == 1:
+            if (signaloff-signalstart) > .3:
+                status=0
+            
+        while GPIO.input(sensorEcho) == 1 and status==1:
             signalon= time.time()
-        
-    timepassed = signalon - signaloff
-        
-    distance = timepassed *17000
+            if (signalon-signalstart) > .6:
+                status=0
     
+    if status==1:
+        timepassed = signalon - signaloff
+        distance = timepassed *17000
+    if status==0:
+        distance=0
+        
     return distance
         
     GPIO.cleanup()
@@ -144,6 +152,12 @@ def center(driveCom, minAll, max1, max2, max3):
     centered=0                         #if program called, Jacques currently not centered
     while(centered==0):                #while not centered
         
+        if (GPIO.input(SButton) == 1):
+            driveCom="G"
+            ser.write(driveCom)
+            #print str(driveCom)
+            state = 5                                #return a state of 5 so manual state control can occur
+                    
         #wait for readings to level out    
         time.sleep(.3)
         #read flame sensors
@@ -228,7 +242,7 @@ def inchUp(position, minAll, max1, max2, max3):
 
 #===============search===============================================
 #   Comprises of all behaviors that enable a robot to drive toward
-#   a flame, and ceter itself onto it at a relatively consistant distance
+#   a flame, and center itself onto it at a relatively consistant distance
 def search(state, max1, max2, max3, minAll):
     
     # relative distance based on calibration
@@ -298,6 +312,8 @@ def search(state, max1, max2, max3, minAll):
                 #compare lowest flame against what is deemed as "close" Begin inching up in this range
                 lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
                 if lowestFlame< closeval:
+                    driveCom="G"
+                    ser.write(driveCom)
                     position=inchUp(0, minAll, max1, max2, max3)
                     if position==1:
                         state=6
@@ -310,19 +326,18 @@ def search(state, max1, max2, max3, minAll):
                     SonarC = readSonar(Ultra3T, Ultra3E)
                     SonarB = readSonar(Ultra4T, Ultra4E)
                     lowest= min( SonarC, SonarB)
-                    # if lowest < 0:
-                    #     driveCom="G"
-                    #     ser.write(driveCom)
-                    #     while(state==4):
-                    #         GPIO.output(Status1, GPIO.HIGH)
-                    #         GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed ultrasonic
-                    #         GPIO.output(Status3, GPIO.HIGH)
-                    #         GPIO.output(Status4, GPIO.LOW)
-                    #         GPIO.output(Status5, GPIO.HIGH)
-                            #   if (GPIO.input(SButton) == 1):
-                            #       driveCom="G"
-                            #       ser.write(driveCom)
-                            #       state = 3                                #return a state of 3 so manual state control can occur
+                    if lowest == 0:
+                        driveCom="G"
+                        ser.write(driveCom)
+                        print "here"
+                        while(state==4):
+                            GPIO.output(Status1, GPIO.HIGH)
+                            GPIO.output(Status2, GPIO.HIGH)            #LED pattern for failed ultrasonic
+                            GPIO.output(Status3, GPIO.HIGH)
+                            GPIO.output(Status4, GPIO.LOW)
+                            GPIO.output(Status5, GPIO.HIGH)
+                            if (GPIO.input(SButton) == 1):
+                                state = 3                                #return a state of 3 so manual state control can occur
                     
                     if (lowest <= 25):
                         driveCom="G"
@@ -345,7 +360,7 @@ def search(state, max1, max2, max3, minAll):
                             if (lowest > 25):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
-                                GPIO.output(Status2, GPIO.LOW)            #erase LED pattern
+                                GPIO.output(Status2, GPIO.HIGH)            #erase LED pattern
                                 GPIO.output(Status3, GPIO.LOW)
                                 GPIO.output(Status4, GPIO.LOW)
                                 GPIO.output(Status5, GPIO.LOW)
@@ -360,21 +375,23 @@ def search(state, max1, max2, max3, minAll):
                 #         driveCom=newDrive
                 #         ser.write(driveCom)
                 #     centered = center(driveCom, minAll, max1, max2, max3)
-                    
+                 
+                
+                if state==4:   
 
-                #print("lowest: " + str(lowestFlame))
-                if lowestFlame >= farval:                               #Determine speed of robot based on perceived distance
-                    newDrive="C"
-                elif (lowestFlame >=medval):
-                    newDrive= "B"
-                elif (lowestFlame >=closeval):
-                    newDrive="A"    
-                elif lowestFlame <closeval:
-                    newDrive="G"
-                if (newDrive !=driveCom):
-                    driveCom=newDrive
-                    ser.write(driveCom)
-                #print str(driveCom)
+                    #print("lowest: " + str(lowestFlame))
+                    if lowestFlame >= farval:                               #Determine speed of robot based on perceived distance
+                        newDrive="C"
+                    elif (lowestFlame >=medval):
+                        newDrive= "B"
+                    elif (lowestFlame >=closeval):
+                        newDrive="A"    
+                    elif lowestFlame <closeval:
+                        newDrive="G"
+                    if (newDrive !=driveCom):
+                        driveCom=newDrive
+                        ser.write(driveCom)
+                        #print str(driveCom)
 
             
     

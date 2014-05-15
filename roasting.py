@@ -18,7 +18,7 @@ GPIO.setup(motorB,GPIO.OUT)
 Flame1 = "P9_40"
 Flame2 = "P9_38"
 Flame3 = "P9_36"
-Status4="P8_13"
+Status4="P8_14"
 RButton= "P8_18"
 SButton= "P8_10"
 probe = 'P9_37'
