@@ -445,7 +445,7 @@ def search(state, max1, max2, max3, minAll):
                 #------------------------------------------------------------------comment out when no ultras present
                 
                 #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                if (lowestFlame != ScaledFlame2) or (lowestFlame > 100)  :        
+                if (lowestFlame != ScaledFlame2) or (lowestFlame > 105)  :        
                     newDrive="G"
                     if (newDrive !=driveCom):
                         driveCom=newDrive
