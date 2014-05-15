@@ -21,7 +21,7 @@ while(1):
     potVal=ADC.read(pot)
     GPIO.output(motorA, GPIO.HIGH)
     GPIO.output(motorB, GPIO.LOW)
-    PWM.set_duty_cycle(motorPWM, (100*potVal))
+    PWM.set_duty_cycle(motorPWM, (100*0))
 #    Command = raw_input("Servo position? (1/2/0/x):")
   
     # if Command == '1':
