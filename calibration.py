@@ -5,6 +5,8 @@ import Adafruit_BBIO.GPIO as GPIO
 import time
 import numpy as np
 
+# I'm different
+
 #Define Flame sensors
 Flame1 = "P9_40"
 Flame2 = "P9_38"
