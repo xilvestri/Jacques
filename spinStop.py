@@ -92,8 +92,9 @@ def spinStop(driveCom, minAll, max1, max2, max3):
     spin=0                         #if program called, Jacques currently not centered
     while(spin==0):                #while not centered
         
-        #wait for readings to level out    
-        time.sleep(.4)
+        #wait for readings to level out 
+        if driveCom!="D":
+            time.sleep(.4)
         #read flame sensors
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
@@ -102,8 +103,6 @@ def spinStop(driveCom, minAll, max1, max2, max3):
         ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
         ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
         lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
-        print lowestFlame
-
         
         #Check to be sure flame is, in fact, not centered
         # if(lowestFlame>100):
@@ -119,8 +118,7 @@ def spinStop(driveCom, minAll, max1, max2, max3):
         if (newDrive !=driveCom):
             driveCom=newDrive
             ser.write(driveCom)
-            #print str(driveCom)
-        print driveCom
+
         
         if(lowestFlame != ScaledFlame2) and lowestFlame<=90:
             if (ScaledFlame3 == lowestFlame):
@@ -152,7 +150,4 @@ max2=1780
 max3=1780
 while 1:
     spin=spinStop(driveCom, minAll, max1, max2, max3)
-    if spin ==1:
-        print "woohoo!"
-    else:
-        print "aww"
+ 
