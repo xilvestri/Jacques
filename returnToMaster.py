@@ -6,8 +6,8 @@ import search
 import Adafruit_BBIO.UART as UART
 import serial
 
-Ultra1E="P9_15"
-Ultra1T="P9_13"
+Ultra3E="P9_16"
+Ultra3T="P9_11"
 Status5="P8_17"
 SButton= "P8_10"
 
@@ -17,8 +17,8 @@ Status3="P8_13"
 Status4="P8_14"
 Status5="P8_17"
 
-GPIO.setup(Ultra1E, GPIO.IN)
-GPIO.setup(Ultra1T, GPIO.OUT)
+GPIO.setup(Ultra3E, GPIO.IN)
+GPIO.setup(Ultra3T, GPIO.OUT)
 
 GPIO.setup(Status1, GPIO.OUT)
 GPIO.setup(Status2, GPIO.OUT)
@@ -61,8 +61,8 @@ def returnToMaster(state):
             driveCom="F"
             ser.write(driveCom)
             
-        SonarR = search.readSonar(Ultra1T, Ultra1E)
-        if SonarR<=30:
+        SonarB = search.readSonar(Ultra3T, Ultra3E)
+        if SonarB<=30:
             driveCom="G"
             ser.write(driveCom)
             GPIO.output(Status1, GPIO.HIGH)

@@ -196,16 +196,16 @@ def inchUp(position, minAll, max1, max2, max3):
         if centered ==1:
             while count<4:
                 time.sleep(.3)
-                SonarC = readSonar(Ultra2T, Ultra2E)       #determine current distance from flame
+                SonarC = readSonar(Ultra3T, Ultra3E)       #determine current distance from flame
                 
                 #if too close, back up
-                if (SonarC<12-1):
+                if (SonarC<5):
                     driveCom="f"
                     ser.write(driveCom)
                     ready=0
                 
                 #if too far, inch forward
-                elif (SonarC>1+14):
+                elif (SonarC>8):
                     driveCom="c"
                     ser.write(driveCom)
                     ready=0
@@ -305,11 +305,11 @@ def search(state, max1, max2, max3, minAll):
                         
             #-------determining proximity 
                 if lowestFlame >= closeval:
-                    SonarR = readSonar(Ultra4T, Ultra4E)
-                    SonarL= readSonar(Ultra3T, Ultra3E)
-                    SonarC = readSonar(Ultra2T, Ultra2E)
-                    SonarB = readSonar(Ultra1T, Ultra1E)
-                    lowest= min(SonarR, SonarL, SonarC, SonarB)
+                    #SonarR = readSonar(Ultra2T, Ultra2E)
+                    #SonarL= readSonar(Ultra1T, Ultra1E)
+                    SonarC = readSonar(Ultra3T, Ultra3E)
+                    SonarB = readSonar(Ultra4T, Ultra4E)
+                    lowest= min( SonarC, SonarB)
                     # if lowest < 0:
                     #     driveCom="G"
                     #     ser.write(driveCom)
@@ -337,11 +337,11 @@ def search(state, max1, max2, max3, minAll):
                             
                             #check if object removed
                             time.sleep(.04)
-                            SonarR = readSonar(Ultra4T, Ultra4E)
-                            SonarL= readSonar(Ultra3T, Ultra3E)
-                            SonarC = readSonar(Ultra2T, Ultra2E)
-                            SonarB = readSonar(Ultra1T, Ultra1E)
-                            lowest= min(SonarR, SonarL, SonarC, SonarB)
+                            #SonarR = readSonar(Ultra2T, Ultra2E)
+                            #SonarL= readSonar(Ultra1T, Ultra1E)
+                            SonarC = readSonar(Ultra4T, Ultra4E)
+                            SonarB = readSonar(Ultra3T, Ultra3E)
+                            lowest= min( SonarC, SonarB)
                             if (lowest > 25):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)

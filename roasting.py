@@ -52,9 +52,9 @@ def roasting(state):
             ser.write(servoCom)
             
             #stop the mallow!
-            GPIO.output(motorA, GPIO.LOW)
-            GPIO.output(motorB, GPIO.LOW)
-            PWM.set_duty_cycle(motorPWM, (0))
+            #GPIO.output(motorA, GPIO.LOW)
+            #GPIO.output(motorB, GPIO.LOW)
+            #PWM.set_duty_cycle(motorPWM, (0))
             GPIO.output(Status4, GPIO.LOW)
             # pinMallow="b"                   #stop the mallow!
             # ser.write(spinMallow)

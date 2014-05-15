@@ -10,10 +10,10 @@ import returnToMaster
 
 
 #---------Status LEDs---------
-Status1="P8_12" 
-Status2="P8_11"
-Status3="P8_14"
-Status4="P8_13"
+Status1="P8_11" 
+Status2="P8_12"
+Status3="P8_13"
+Status4="P8_14"
 Status5="P8_17"
 
 #--------State Button---------

@@ -3,6 +3,18 @@ import Adafruit_BBIO.ADC as ADC
 import Adafruit_BBIO.GPIO as GPIO
 import time
 import serial
+import Adafruit_BBIO.PWM as PWM
+
+
+motorPWM= "P8_19"
+motorA="P8_20"
+motorB="P8_21"
+pot = "P9_33"
+
+GPIO.setup(motorA,GPIO.OUT)
+GPIO.setup(motorB,GPIO.OUT)
+
+PWM.start(motorPWM,0, 500)
 
 
 Flame1 = "P9_40"
@@ -24,8 +36,12 @@ def position(state, Status3,  minTherm):
     servoCount =0
     thermistor="P9_39"
     
-    # spinMallow=0                   #spin the mallow!
-    # ser.write(spinMallow)
+    #spin the mallow!
+    #potVal=ADC.read(pot)
+    #GPIO.output(motorA, GPIO.HIGH)
+    #GPIO.output(motorB, GPIO.LOW)
+    #PWM.set_duty_cycle(motorPWM, (100*potVal ))
+    
     time.sleep(.2)
     servoCom="Y"                #set servo to start position
     ser.write(servoCom) 
