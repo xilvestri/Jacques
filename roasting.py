@@ -14,6 +14,17 @@ pot = "P9_33"
 GPIO.setup(motorA,GPIO.OUT)
 GPIO.setup(motorB,GPIO.OUT)
 
+Status1="P8_11"
+Status2="P8_12"
+Status3="P8_13"
+Status4="P8_14"
+Status5="P8_17"
+
+GPIO.setup(Status1, GPIO.OUT)
+GPIO.setup(Status2, GPIO.OUT)
+GPIO.setup(Status3, GPIO.OUT)
+GPIO.setup(Status4, GPIO.OUT)
+GPIO.setup(Status5, GPIO.OUT)
 
 Flame1 = "P9_40"
 Flame2 = "P9_38"
@@ -44,8 +55,8 @@ def roasting(state):
             blinkCount=0
             
         reading = ADC.read_raw(probe)
-        
-        if (reading> 1444):
+
+        if (reading> 1420):
             # Position servo in up position
             state = 10     #allows for immediate state change to return state
             servoCom="Y"                #set servo to start position

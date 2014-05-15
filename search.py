@@ -237,6 +237,23 @@ def inchUp(position, minAll, max1, max2, max3):
         #if correct proximity is determined enough times, begin positioning marshmallow        
         if (ready>3):
             position=1  
+        
+         #Read flame sensors
+        FlameRead = readFlames(Flame1, Flame2, Flame3) 
+        flame1= FlameRead['FlameRead1']
+        flame2= FlameRead['FlameRead2']
+        flame3= FlameRead['FlameRead3']
+    
+        ScaledFlame1=translate(flame1, minAll, max1, 5, 100)
+        ScaledFlame2=translate(flame2, minAll, max2, 5, 100)
+        ScaledFlame3=translate(flame3, minAll, max3, 5, 100)
+
+        #compare lowest flame against what is deemed as "close" Begin inching up in this range
+        lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+        if lowestFlame> closeval:
+            driveCom="G"
+            ser.write(driveCom)
+            position=2
     
     return position
 
@@ -246,9 +263,9 @@ def inchUp(position, minAll, max1, max2, max3):
 def search(state, max1, max2, max3, minAll):
     
     # relative distance based on calibration
-    farval= 50
-    medval=30
-    closeval=13
+    farval= 65
+    medval=50
+    closeval=19
     blinkCount=0
     blinkTime=normalBlink
     
@@ -268,20 +285,24 @@ def search(state, max1, max2, max3, minAll):
         
         
         if (GPIO.input(SeButton) == 1):
-
-            time.sleep(5)                                       #Wait 5 seconds before searching 
-            servoCom="Y"                #set servo to start position
+            
+            #Wait 5 seconds before searching
+            time.sleep(5)                                       
+            #set servo to start position
+            servoCom="Y"                
             ser.write(servoCom)
+            
             blinkTime=runBlink                                #Set blink slower
+            
+            #Initialize robot speed
             driveCom = "G"  
-            ser.write(driveCom)                               #Set start speed of robot
+            ser.write(driveCom)                              
             while state ==4:
+                #return a state of 5 so manual state control to position can occur
                 if (GPIO.input(SButton) == 1):
                     driveCom="G"
                     ser.write(driveCom)
-                    #print str(driveCom)
-                    state = 5                                #return a state of 5 so manual state control can occur
-       
+                    state = 5                                
        
                 if(blinkCount<=blinkTime):
                     GPIO.output(Status2, GPIO.HIGH)
@@ -293,8 +314,6 @@ def search(state, max1, max2, max3, minAll):
                     blinkCount=0
                 
                 
-                #print str(driveCom)
-                
                 #Read flame sensors
                 FlameRead = readFlames(Flame1, Flame2, Flame3) 
                 flame1= FlameRead['FlameRead1']
@@ -305,9 +324,6 @@ def search(state, max1, max2, max3, minAll):
                 ScaledFlame1=translate(flame1, minAll, max1, 5, 100)
                 ScaledFlame2=translate(flame2, minAll, max2, 5, 100)
                 ScaledFlame3=translate(flame3, minAll, max3, 5, 100)
-                # print(ScaledFlame1)
-                # print(ScaledFlame2)
-                # print(ScaledFlame3) 
 
                 #compare lowest flame against what is deemed as "close" Begin inching up in this range
                 lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
@@ -321,6 +337,7 @@ def search(state, max1, max2, max3, minAll):
                         
             #-------determining proximity 
                 if lowestFlame >= closeval:
+                    #read ultrasonics 
                     #SonarR = readSonar(Ultra2T, Ultra2E)
                     #SonarL= readSonar(Ultra1T, Ultra1E)
                     SonarC = readSonar(Ultra3T, Ultra3E)
@@ -338,7 +355,7 @@ def search(state, max1, max2, max3, minAll):
                             if (GPIO.input(SButton) == 1):
                                 state = 3                                #return a state of 3 so manual state control can occur
                     
-                    if (lowest <= 25):
+                    if (lowest <= 30):
                         driveCom="G"
                         ser.write(driveCom)
                         thing=1
@@ -349,6 +366,26 @@ def search(state, max1, max2, max3, minAll):
                             GPIO.output(Status4, GPIO.LOW)
                             GPIO.output(Status5, GPIO.HIGH)
                             
+                            #Read flame sensors
+                            FlameRead = readFlames(Flame1, Flame2, Flame3) 
+                            flame1= FlameRead['FlameRead1']
+                            flame2= FlameRead['FlameRead2']
+                            flame3= FlameRead['FlameRead3']
+
+    
+                            ScaledFlame1=translate(flame1, minAll, max1, 5, 100)
+                            ScaledFlame2=translate(flame2, minAll, max2, 5, 100)
+                            ScaledFlame3=translate(flame3, minAll, max3, 5, 100)
+
+                            #compare lowest flame against what is deemed as "close" Begin inching up in this range
+                            lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+                            if lowestFlame< closeval:
+                                driveCom="G"
+                                ser.write(driveCom)
+                                position=inchUp(0, minAll, max1, max2, max3)
+                                thing=0
+
+                                    
                             #check if object removed
                             time.sleep(.04)
                             #SonarR = readSonar(Ultra2T, Ultra2E)
@@ -356,7 +393,7 @@ def search(state, max1, max2, max3, minAll):
                             SonarC = readSonar(Ultra4T, Ultra4E)
                             SonarB = readSonar(Ultra3T, Ultra3E)
                             lowest= min( SonarC, SonarB)
-                            if (lowest > 25):
+                            if (lowest > 30):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
                                 GPIO.output(Status2, GPIO.HIGH)            #erase LED pattern
@@ -368,7 +405,7 @@ def search(state, max1, max2, max3, minAll):
                 #------------------------------------------------------------------comment out when no ultras present
                 
                 #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        
+                if (lowestFlame != ScaledFlame2) or (lowestFlame >= 95)  :        
                     newDrive="G"
                     if (newDrive !=driveCom):
                         driveCom=newDrive

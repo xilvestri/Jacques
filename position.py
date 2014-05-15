@@ -65,7 +65,7 @@ def position(state, Status3,  minTherm):
         
         
         #reads thermistor to check quality of position
-        time.sleep(.4)
+        time.sleep(.3)
         thermistor=ADC.read_raw("P9_39")
         
         servoCount = servoCount +1
