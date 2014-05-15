@@ -43,6 +43,7 @@ ser = serial.Serial(port = "/dev/ttyO1", baudrate = 9600)
 #  to signal the roast has failed
 def roasting(state):
     blinkCount=0
+    timePass=0
     timeStart=time.time()
     while state == 8:
         if(blinkCount<=700):
@@ -56,16 +57,16 @@ def roasting(state):
             
         reading = ADC.read_raw(probe)
 
-        if (reading> 1420):
+        if (reading> 1393) and timePass>30:
             # Position servo in up position
             state = 10     #allows for immediate state change to return state
             servoCom="Y"                #set servo to start position
             ser.write(servoCom)
             
             #stop the mallow!
-            #GPIO.output(motorA, GPIO.LOW)
-            #GPIO.output(motorB, GPIO.LOW)
-            #PWM.set_duty_cycle(motorPWM, (0))
+            GPIO.output(motorA, GPIO.LOW)
+            GPIO.output(motorB, GPIO.LOW)
+            PWM.set_duty_cycle(motorPWM, (0))
             GPIO.output(Status4, GPIO.LOW)
             
         if (GPIO.input(SButton) == 1):
@@ -87,8 +88,12 @@ def roasting(state):
         #for demo day
         timeNow=time.time()
         timePass=timeNow-timeStart
-        if timePass > 90:
-            # Position servo in up position
+        if timePass > 60:
+            #stop the mallow!
+            GPIO.output(motorA, GPIO.LOW)
+            GPIO.output(motorB, GPIO.LOW)
+            PWM.set_duty_cycle(motorPWM, (0))
+            GPIO.output(Status4, GPIO.LOW)
             state = 10     #allows for immediate state change to return state
             servoCom="Y"                #set servo to start position
             ser.write(servoCom)

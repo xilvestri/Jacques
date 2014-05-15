@@ -48,12 +48,12 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 #   Similar to the calibrate phase, takes an average of a set of readings and
 #   provides that average as an overall reading. Alloes for a running average
 #   to smooth out spiking readings
-def readFlames(Flame1, Flame2, Flame3):
+def readFlames(Flame1, Flame2, Flame3, rangeval):
     sample1 = []
     sample2 = []
     sample3 = []
     full=[1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0]
-    for x in range(0,10):
+    for x in range(0,rangeval):
                 
         #collect values of sensor
         Flame1reading = ADC.read_raw(Flame1)
@@ -86,57 +86,68 @@ def readFlames(Flame1, Flame2, Flame3):
     
     return {'FlameRead1':read1, 'FlameRead2':read2, 'FlameRead3':read3}
     
-def spinStop(driveCom, minAll, max1, max2, max3):
+def spinStop(driveCom, minAll, max1, max2, max3, lowestFlame):
     blinkCount=0
     count = 0
+    turn =1
     spin=0                         #if program called, Jacques currently not centered
     while(spin==0):                #while not centered
         
+        if lowestFlame>100:
+            time.sleep(0)
         #wait for readings to level out 
-        if driveCom!="D":
+        elif driveCom!="D" or driveCom!="E":
             time.sleep(.4)
+        if driveCom=="G":
+            time.sleep(.5)
         #read flame sensors
-        Flame1reading = ADC.read_raw(Flame1)
-        Flame2reading = ADC.read_raw(Flame2)
-        Flame3reading = ADC.read_raw(Flame3)
+        Flames = readFlames(Flame1, Flame2, Flame3,3)
+        Flame1reading =Flames['FlameRead1']
+        Flame2reading = Flames['FlameRead2']
+        Flame3reading = Flames['FlameRead3']
         ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
         ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
         ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
         lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
         
-        #Check to be sure flame is, in fact, not centered
-        # if(lowestFlame>100):
-        #     driveCom="D"
-        #     ser.write(driveCom)
-        #     driveCom="G"
-        #     ser.write(driveCom)
-        #     time.sleep(.8)
-        if lowestFlame >90:                               #Determine speed of robot based on perceived distance
+        if lowestFlame >99 and turn==1:                               #Determine speed of robot based on perceived distance
+            newDrive="E"
+        elif lowestFlame >99 and turn==2:                               #Determine speed of robot based on perceived distance
             newDrive="D"
-        elif lowestFlame<=90:
+        if lowestFlame<=100:
             newDrive="G"
+            if driveCom=="D":
+                driveCom="e"    #correction increment
+                ser.write(driveCom)
+                time.sleep(.07)
+                turn=1
+            if driveCom=="E":
+                driveCom="d"    #correction increment
+                ser.write(driveCom)
+                time.sleep(.07)
+                turn=2
         if (newDrive !=driveCom):
             driveCom=newDrive
             ser.write(driveCom)
 
         
-        if(lowestFlame != ScaledFlame2) and lowestFlame<=90:
-            if (ScaledFlame3 == lowestFlame):
-                driveCom="d"    #turn right
+        if(lowestFlame != ScaledFlame2) and lowestFlame<=99:
+            if (ScaledFlame1 == lowestFlame):
+                driveCom="e"    #turn right
                 ser.write(driveCom)
 
             else:
-                driveCom="e"             #turn left
+                driveCom="d"             #turn left
                 ser.write(driveCom)
         
         #if flame is cetered and it isn't stopped
-        if(lowestFlame==ScaledFlame2  and lowestFlame<=90 and driveCom!="G"):
+        if(lowestFlame==ScaledFlame2  and lowestFlame<=99 and driveCom!="G"):
             driveCom="G"
             ser.write(driveCom)
             spin=1        #flame centered
         
         #if flame is cetered and it is stopped
-        elif(lowestFlame==ScaledFlame2 and lowestFlame<=90 and driveCom=="G"):
+        elif(lowestFlame==ScaledFlame2 and lowestFlame<=99 and driveCom=="G"):
             spin=1
         
     return spin            # centered?
@@ -148,6 +159,10 @@ minAll=200
 max1=1780
 max2=1780
 max3=1780
-while 1:
-    spin=spinStop(driveCom, minAll, max1, max2, max3)
+timestart=time.time()
+passed=0
+while passed<30:
+    spin=spinStop(driveCom, minAll, max1, max2, max3, 101)
+    timenow=time.time()
+    passed=timenow-timestart
  

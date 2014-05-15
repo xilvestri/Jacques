@@ -51,7 +51,7 @@ ser.open()
 
 #===============Blink Speed Constants ====================================
 
-normalBlink = 700
+normalBlink = 600
 problemBlink = 400
 runBlink = 1200
 
@@ -85,12 +85,12 @@ def readSonar(sensorTrig, sensorEcho):
         
         while GPIO.input(sensorEcho) == 0 and status==1:
             signaloff = time.time()
-            if (signaloff-signalstart) > .3:
+            if (signaloff-signalstart) > .35:
                 status=0
             
         while GPIO.input(sensorEcho) == 1 and status==1:
             signalon= time.time()
-            if (signalon-signalstart) > .6:
+            if (signalon-signalstart) > .7:
                 status=0
     
     if status==1:
@@ -107,36 +107,36 @@ def readSonar(sensorTrig, sensorEcho):
 #   Similar to the calibrate phase, takes an average of a set of readings and
 #   provides that average as an overall reading. Alloes for a running average
 #   to smooth out spiking readings
-def readFlames(Flame1, Flame2, Flame3):
+def readFlames(Flame1, Flame2, Flame3, rangeval):
     sample1 = []
     sample2 = []
     sample3 = []
     full=[1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0]
-    for x in range(0,10):
+    for x in range(0,rangeval):
                 
         #collect values of sensor
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
         Flame3reading = ADC.read_raw(Flame3)
         
-        if Flame1reading < 1780.0:        
+        if Flame1reading <= 1799.0:        
             sample1 = sample1 + [Flame1reading]
-        if Flame2reading < 1780.0:
+        if Flame2reading <= 1799.0:
             sample2 = sample2 + [Flame2reading]
-        if Flame3reading < 1780.0:
+        if Flame3reading <= 1799.0:
             sample3 = sample3 + [Flame3reading]
 
             
-    #eliminate outliers if found
-    sample1=[e for e in sample1 if (np.median(sample1)-2*np.std(sample1) < e <np.median(sample1) +2 * np.std(sample1))]
-    if len(sample1)==0:
-        sample1=full
-    sample2=[e for e in sample2 if (np.median(sample2)-2*np.std(sample2) < e <np.median(sample2) +2 * np.std(sample2))]
-    if len(sample2)==0:
-        sample2=full
-    sample3=[e for e in sample3 if (np.median(sample3)-2*np.std(sample3) < e <np.median(sample3) +2 * np.std(sample3))]
-    if len(sample3)==0:
-        sample3=full
+    # #eliminate outliers if found
+    # sample1=[e for e in sample1 if (np.median(sample1)-2*np.std(sample1) < e <np.median(sample1) +2 * np.std(sample1))]
+    # if len(sample1)==0:
+    #     sample1=full
+    # sample2=[e for e in sample2 if (np.median(sample2)-2*np.std(sample2) < e <np.median(sample2) +2 * np.std(sample2))]
+    # if len(sample2)==0:
+    #     sample2=full
+    # sample3=[e for e in sample3 if (np.median(sample3)-2*np.std(sample3) < e <np.median(sample3) +2 * np.std(sample3))]
+    # if len(sample3)==0:
+    #     sample3=full
             
     #takes average of values and stores for future use.
     read1 = np.mean(sample1)
@@ -147,66 +147,121 @@ def readFlames(Flame1, Flame2, Flame3):
 
 #===============center===============================================
 #   incrementally turns robot toward a flame until it is head on  
-def center(driveCom, minAll, max1, max2, max3):
+def center(driveCom, minAll, max1, max2, max3, lowestFlame):
+    newDrive=driveCom
     blinkCount=0
     count = 0
-    centered=0                         #if program called, Jacques currently not centered
-    while(centered==0):                #while not centered
-        
-        if (GPIO.input(SButton) == 1):
-            driveCom="G"
-            ser.write(driveCom)
-            #print str(driveCom)
-            state = 5                                #return a state of 5 so manual state control can occur
-                    
-        #wait for readings to level out    
-        time.sleep(.4)
+    turn =1
+    center=0                         #if program called, Jacques currently not centered
+    while(center==0):                #while not centered
+        #print lowestFlame
+        if lowestFlame>101:
+            time.sleep(0)
+        #wait for readings to level out 
+        elif driveCom!="D" or driveCom!="E":
+            time.sleep(.4)
+        if driveCom=="G":
+            time.sleep(.5)
         #read flame sensors
-        Flame1reading = ADC.read_raw(Flame1)
-        Flame2reading = ADC.read_raw(Flame2)
-        Flame3reading = ADC.read_raw(Flame3)
+        Flames = readFlames(Flame1, Flame2, Flame3,3)
+        Flame1reading =Flames['FlameRead1']
+        Flame2reading = Flames['FlameRead2']
+        Flame3reading = Flames['FlameRead3']
         ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
         ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
         ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
         lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
-
         
-        #Check to be sure flame is, in fact, not centered
-        # if(lowestFlame>100):
-        #     driveCom="D"
-        #     ser.write(driveCom)
-        #     driveCom="G"
-        #     ser.write(driveCom)
-        #     time.sleep(.8)
-        
-        if(lowestFlame != ScaledFlame2):
-            if (ScaledFlame3 == lowestFlame):
+        if lowestFlame >100 and turn==1:                               #Determine speed of robot based on perceived distance
+            # newDrive="E"
+            for x in range(0,15):
+                driveCom="e"    #turn right
+                ser.write(driveCom)
+                time.sleep(.2)
+                Flames = readFlames(Flame1, Flame2, Flame3,3)
+                Flame1reading =Flames['FlameRead1']
+                Flame2reading = Flames['FlameRead2']
+                Flame3reading = Flames['FlameRead3']
+                ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
+                ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
+                ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
+                lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+                if lowestFlame<=99:
+                    break
+            turn=2
+        elif lowestFlame >100 and turn==2:                               #Determine speed of robot based on perceived distance
+            for x in range(0, 30):
                 driveCom="d"    #turn left
                 ser.write(driveCom)
+                time.sleep(.2)
+                Flames = readFlames(Flame1, Flame2, Flame3,3)
+                Flame1reading =Flames['FlameRead1']
+                Flame2reading = Flames['FlameRead2']
+                Flame3reading = Flames['FlameRead3']
+                ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
+                ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
+                ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
+                lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+                if lowestFlame<=99:
+                    break
+            turn=1
+            #newDrive="D"
+        # if (newDrive !=driveCom):
+        #     driveCom=newDrive
+        #     ser.write(driveCom)
+        # if lowestFlame<=101:
+        #     newDrive="G"
+        #     if driveCom=="D":
+        #         # driveCom="e"    #correction increment
+        #         # ser.write(driveCom)
+        #         # time.sleep(.07)
+        #         turn=1
+        #     if driveCom=="E":
+        #         # driveCom="d"    #correction increment
+        #         # ser.write(driveCom)
+        #         # time.sleep(.07)
+        #         turn=2
+        # if (newDrive !=driveCom):
+        #     driveCom=newDrive
+        #     ser.write(driveCom)
+
+        Flames = readFlames(Flame1, Flame2, Flame3,3)
+        Flame1reading =Flames['FlameRead1']
+        Flame2reading = Flames['FlameRead2']
+        Flame3reading = Flames['FlameRead3']
+        ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
+        ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
+        ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
+        lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+        
+        if(lowestFlame != ScaledFlame2) and lowestFlame<=100:
+            if (ScaledFlame1 == lowestFlame):
+                driveCom="e"    #turn right
+                ser.write(driveCom)
+                time.sleep(.1)
 
             else:
-                driveCom="e"             #turn right
+                driveCom="d"             #turn left
                 ser.write(driveCom)
-
+                time.sleep(.1)
+        
         #if flame is cetered and it isn't stopped
-        elif(lowestFlame==ScaledFlame2 and driveCom!="G"):
+        if(lowestFlame==ScaledFlame2  and lowestFlame<=100 and driveCom!="G"):
             driveCom="G"
             ser.write(driveCom)
-            centered=1        #flame centered
+            senter=1        #flame centered
         
         #if flame is cetered and it is stopped
-        elif(lowestFlame==ScaledFlame2 and driveCom=="G"):
-            centered=1
+        elif(lowestFlame==ScaledFlame2 and lowestFlame<=100 and driveCom=="G"):
+            center=1
         
-    return centered             # centered?
-        
-    GPIO.cleanup()
+    return center            # centered?
 
 #===============inchUp===============================================
 #   Called when robot is within a short distance from the flame. Allows for incremented
 #   turning and incremented adjustments forward and backward until the marshmallow is
 #   within range of the marshmallow chaft
-def inchUp(closeval, position, minAll, max1, max2, max3):
+def inchUp(closeval, position, minAll, max1, max2, max3, lowestFlame):
     #reset marker to determine if properlly positioned
     ready=0
     blinkCount=0
@@ -214,12 +269,12 @@ def inchUp(closeval, position, minAll, max1, max2, max3):
     driveCom="G"
     ser.write(driveCom)
     while (position==0):
-        centered = center(driveCom, minAll, max1, max2, max3)          #Centering up robot
+        centered = center(driveCom, minAll, max1, max2, max3,lowestFlame)          #Centering up robot
         count=0
         if centered ==1:
-            while count<4 and position ==0:
+            while count<2 and position ==0:
                 #Read flame sensors
-                FlameRead = readFlames(Flame1, Flame2, Flame3) 
+                FlameRead = readFlames(Flame1, Flame2, Flame3,7) 
                 flame1= FlameRead['FlameRead1']
                 flame2= FlameRead['FlameRead2']
                 flame3= FlameRead['FlameRead3']
@@ -270,11 +325,11 @@ def inchUp(closeval, position, minAll, max1, max2, max3):
                 #print ready
         
         #if correct proximity is determined enough times, begin positioning marshmallow        
-        if (ready>3):
+        if (ready>1):
             position=1  
         
          #Read flame sensors
-        FlameRead = readFlames(Flame1, Flame2, Flame3) 
+        FlameRead = readFlames(Flame1, Flame2, Flame3,7) 
         flame1= FlameRead['FlameRead1']
         flame2= FlameRead['FlameRead2']
         flame3= FlameRead['FlameRead3']
@@ -298,11 +353,12 @@ def inchUp(closeval, position, minAll, max1, max2, max3):
 def search(state, max1, max2, max3, minAll):
     
     # relative distance based on calibration
-    farval= 65
-    medval=50
-    closeval=13
+    farval= 70
+    medval=60
+    closeval=16
     blinkCount=0
     blinkTime=normalBlink
+    inRange=0
     
     while state == 4:
         if (GPIO.input(SButton) == 1):
@@ -350,7 +406,7 @@ def search(state, max1, max2, max3, minAll):
                 
                 
                 #Read flame sensors
-                FlameRead = readFlames(Flame1, Flame2, Flame3) 
+                FlameRead = readFlames(Flame1, Flame2, Flame3, 8) 
                 flame1= FlameRead['FlameRead1']
                 flame2= FlameRead['FlameRead2']
                 flame3= FlameRead['FlameRead3']
@@ -362,10 +418,13 @@ def search(state, max1, max2, max3, minAll):
 
                 #compare lowest flame against what is deemed as "close" Begin inching up in this range
                 lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
-                if lowestFlame< closeval:
+                if lowestFlame<100:
+                    inRange=inRange+1
+                SonarC = readSonar(Ultra3T, Ultra3E)
+                if lowestFlame< closeval and SonarC<70:
                     driveCom="G"
                     ser.write(driveCom)
-                    position=inchUp(closeval, 0, minAll, max1, max2, max3)
+                    position=inchUp(closeval, 0, minAll, max1, max2, max3, lowestFlame)
                     if position==1:
                         state=6
                         GPIO.output(Status2, GPIO.LOW)
@@ -390,7 +449,7 @@ def search(state, max1, max2, max3, minAll):
                             if (GPIO.input(SButton) == 1):
                                 state = 3                                #return a state of 3 so manual state control can occur
                     
-                    if (lowest <= 20):
+                    if (lowest <= 25):
                         driveCom="G"
                         ser.write(driveCom)
                         thing=1
@@ -402,7 +461,7 @@ def search(state, max1, max2, max3, minAll):
                             GPIO.output(Status5, GPIO.HIGH)
                             
                             #Read flame sensors
-                            FlameRead = readFlames(Flame1, Flame2, Flame3) 
+                            FlameRead = readFlames(Flame1, Flame2, Flame3,8) 
                             flame1= FlameRead['FlameRead1']
                             flame2= FlameRead['FlameRead2']
                             flame3= FlameRead['FlameRead3']
@@ -414,7 +473,7 @@ def search(state, max1, max2, max3, minAll):
 
                             #compare lowest flame against what is deemed as "close" Begin inching up in this range
                             lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
-                            if lowestFlame< (closeval*1.7):
+                            if lowestFlame< (closeval*2.1):
                                 GPIO.output(Status1, GPIO.LOW)
                                 GPIO.output(Status2, GPIO.LOW)            #LED pattern low
                                 GPIO.output(Status3, GPIO.LOW)
@@ -422,7 +481,7 @@ def search(state, max1, max2, max3, minAll):
                                 GPIO.output(Status5, GPIO.LOW)
                                 driveCom="G"
                                 ser.write(driveCom)
-                                position=inchUp(closeval, 0, minAll, max1, max2, max3)
+                                position=inchUp(closeval, 0, minAll, max1, max2, max3, lowestFlame)
                                 thing=0
 
                                     
@@ -433,7 +492,7 @@ def search(state, max1, max2, max3, minAll):
                             SonarC = readSonar(Ultra4T, Ultra4E)
                             SonarB = readSonar(Ultra3T, Ultra3E)
                             lowest= min( SonarC, SonarB)
-                            if (lowest > 20):
+                            if (lowest > 25):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
                                 GPIO.output(Status2, GPIO.HIGH)            #erase LED pattern
@@ -445,12 +504,13 @@ def search(state, max1, max2, max3, minAll):
                 #------------------------------------------------------------------comment out when no ultras present
                 
                 #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                if (lowestFlame != ScaledFlame2) or (lowestFlame > 105)  :        
+                if ((lowestFlame != ScaledFlame2) or (lowestFlame > 100) ):
+                #or((inRange>=20)and lowestFlame>=100):        
                     newDrive="G"
                     if (newDrive !=driveCom):
                         driveCom=newDrive
                         ser.write(driveCom)
-                    centered = center(driveCom, minAll, max1, max2, max3)
+                    centered = center(driveCom, minAll, max1, max2, max3,lowestFlame)
                  
                 
                 #check state to be sure that no changes have been made

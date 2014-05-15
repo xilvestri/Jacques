@@ -37,10 +37,10 @@ def position(state, Status3,  minTherm):
     thermistor="P9_39"
     
     #spin the mallow!
-    #potVal=ADC.read(pot)
-    #GPIO.output(motorA, GPIO.HIGH)
-    #GPIO.output(motorB, GPIO.LOW)
-    #PWM.set_duty_cycle(motorPWM, (100*potVal ))
+    potVal=ADC.read(pot)
+    GPIO.output(motorA, GPIO.HIGH)
+    GPIO.output(motorB, GPIO.LOW)
+    PWM.set_duty_cycle(motorPWM, (100*.56 ))
     
     time.sleep(.2)
     servoCom="Y"                #set servo to start position
@@ -71,20 +71,22 @@ def position(state, Status3,  minTherm):
         servoCount = servoCount +1
         
         #if thermistor angle is where we want it
-        if(thermistor>(60+minTherm)):
+        if(thermistor>(80+minTherm) and startCount>3):
             servoCom="W"                    #move servo down (6) degrees 
             ser.write(servoCom)
             state = 8    #allows for immediate state change to roasting
          
         
-        elif (servoCount >= 28):
+        elif (servoCount >= 29):
             servoCount =0
-            servoCom="Y"                #set servo to start position
-            ser.write(servoCom)     
             startCount=startCount +1    #try again?
-            if startCount==2:           #go back to search
-                GPIO.output(Status3, GPIO.LOW)
-                state=4
+            if startCount==1:           #go back to search
+                #GPIO.output(Status3, GPIO.LOW)
+                #state=4
+                state=8
+            else:
+                servoCom="Y"                #set servo to start position
+                ser.write(servoCom)
             
     
     return state
