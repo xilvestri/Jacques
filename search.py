@@ -198,9 +198,10 @@ def center(driveCom, minAll, max1, max2, max3):
 #   Called when robot is within a short distance from the flame. Allows for incremented
 #   turning and incremented adjustments forward and backward until the marshmallow is
 #   within range of the marshmallow chaft
-def inchUp(position, minAll, max1, max2, max3):
+def inchUp(closeval, position, minAll, max1, max2, max3):
     #reset marker to determine if properlly positioned
     ready=0
+    blinkCount=0
     #stop robot just in case
     driveCom="G"
     ser.write(driveCom)
@@ -208,7 +209,33 @@ def inchUp(position, minAll, max1, max2, max3):
         centered = center(driveCom, minAll, max1, max2, max3)          #Centering up robot
         count=0
         if centered ==1:
-            while count<4:
+            while count<4 and position ==0:
+                #Read flame sensors
+                FlameRead = readFlames(Flame1, Flame2, Flame3) 
+                flame1= FlameRead['FlameRead1']
+                flame2= FlameRead['FlameRead2']
+                flame3= FlameRead['FlameRead3']
+    
+                ScaledFlame1=translate(flame1, minAll, max1, 5, 100)
+                ScaledFlame2=translate(flame2, minAll, max2, 5, 100)
+                ScaledFlame3=translate(flame3, minAll, max3, 5, 100)
+
+                #compare lowest flame against what is deemed as "close" Begin inching up in this range
+                lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
+                if lowestFlame> closeval:
+                    driveCom="G"
+                    ser.write(driveCom)
+                    position=2
+                    
+                if(blinkCount<=6):
+                    GPIO.output(Status2, GPIO.HIGH)
+                    blinkCount = blinkCount+1
+                elif(6<blinkCount<=(6*2)):
+                    GPIO.output(Status2, GPIO.LOW)
+                    blinkCount = blinkCount +1
+                else:
+                    blinkCount=0
+                    
                 time.sleep(.3)
                 SonarC = readSonar(Ultra3T, Ultra3E)       #determine current distance from flame
                 
@@ -265,7 +292,7 @@ def search(state, max1, max2, max3, minAll):
     # relative distance based on calibration
     farval= 65
     medval=50
-    closeval=19
+    closeval=15
     blinkCount=0
     blinkTime=normalBlink
     
@@ -330,7 +357,7 @@ def search(state, max1, max2, max3, minAll):
                 if lowestFlame< closeval:
                     driveCom="G"
                     ser.write(driveCom)
-                    position=inchUp(0, minAll, max1, max2, max3)
+                    position=inchUp(closeval, 0, minAll, max1, max2, max3)
                     if position==1:
                         state=6
                         GPIO.output(Status2, GPIO.LOW)
@@ -355,7 +382,7 @@ def search(state, max1, max2, max3, minAll):
                             if (GPIO.input(SButton) == 1):
                                 state = 3                                #return a state of 3 so manual state control can occur
                     
-                    if (lowest <= 30):
+                    if (lowest <= 26):
                         driveCom="G"
                         ser.write(driveCom)
                         thing=1
@@ -382,7 +409,7 @@ def search(state, max1, max2, max3, minAll):
                             if lowestFlame< closeval:
                                 driveCom="G"
                                 ser.write(driveCom)
-                                position=inchUp(0, minAll, max1, max2, max3)
+                                position=inchUp(closeval, 0, minAll, max1, max2, max3)
                                 thing=0
 
                                     
@@ -393,7 +420,7 @@ def search(state, max1, max2, max3, minAll):
                             SonarC = readSonar(Ultra4T, Ultra4E)
                             SonarB = readSonar(Ultra3T, Ultra3E)
                             lowest= min( SonarC, SonarB)
-                            if (lowest > 30):
+                            if (lowest > 26):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
                                 GPIO.output(Status2, GPIO.HIGH)            #erase LED pattern
