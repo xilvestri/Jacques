@@ -13,10 +13,18 @@ Flame3 = "P9_36"
 CButton= "P8_18"
 SButton= "P8_10"
 Status1="P8_11"
+Status2="P8_12"
+Status3="P8_13"
+Status4="P8_14"
+Status5="P8_17"
 thermistor = "P9_39"
 ADC.setup()
 GPIO.setup(CButton, GPIO.IN)
 GPIO.setup(Status1, GPIO.OUT)
+GPIO.setup(Status2, GPIO.OUT)
+GPIO.setup(Status3, GPIO.OUT)
+GPIO.setup(Status4, GPIO.OUT)
+GPIO.setup(Status5, GPIO.OUT)
 
 
 def calibration(state):
@@ -38,6 +46,15 @@ def calibration(state):
     #State goes on while under calibration
     while (state== 2):
         
+        if Cflag==0:
+            GPIO.output(Status4, GPIO.HIGH)
+            GPIO.output(Status5, GPIO.LOW)
+        elif Cflag==1:
+            GPIO.output(Status5, GPIO.HIGH)
+            GPIO.output(Status4, GPIO.LOW)
+        elif Cflag==2:
+            GPIO.output(Status5, GPIO.LOW)
+            GPIO.output(Status4, GPIO.LOW)
         #Blinks LED when waiting for calibration command
         if(blinkCount<=1400):
              GPIO.output(Status1, GPIO.HIGH)
@@ -51,9 +68,53 @@ def calibration(state):
         
         if (GPIO.input(SButton) == 1):
             state = 3                                #return a state of 3 so manual state control can occur
-        
+
+            
+        #Collect readings at the flame
+        if (GPIO.input(CButton) == 1 and Cflag == 0):    
+            for x in range(0,50):
+                time.sleep(.03)
+                if (x<=3 or 6<x<=9 or 12<x<=15 or 18<x<=21 or 24<x<=27 or 30<x<=33 or 36<x<=39 or 42<x<=45 or 48<x<=50):
+                    GPIO.output(Status1, GPIO.HIGH)
+                else:
+                    GPIO.output(Status1, GPIO.LOW)
+                
+
+                Flame1reading = ADC.read_raw(Flame1)
+                Flame2reading = ADC.read_raw(Flame2)
+                Flame3reading = ADC.read_raw(Flame3)
+                yesFlame1 = yesFlame1 + [Flame1reading]
+                yesFlame2 = yesFlame2 + [Flame2reading]
+                yesFlame3 = yesFlame3 + [Flame3reading]
+
+            yesFlame1=[e for e in yesFlame1 if (np.median(yesFlame1)-2*np.std(yesFlame1) < e <np.median(yesFlame1) +2 * np.std(yesFlame1))]
+            if len(yesFlame1)==0:
+                yesFlame1=full
+            yesFlame2=[e for e in yesFlame2 if (np.median(yesFlame2)-2*np.std(yesFlame2) < e <np.median(yesFlame2) +2 * np.std(yesFlame2))]
+            if len(yesFlame2)==0:
+                yesFlame2=full
+            yesFlame3=[e for e in yesFlame3 if (np.median(yesFlame3)-2*np.std(yesFlame3) < e <np.median(yesFlame3) +2 * np.std(yesFlame3))]
+            if len(yesFlame3)==0:
+                yesFlame3=full
+            
+            yesAverage1 = np.mean(yesFlame1)
+            yesAverage2 = np.mean(yesFlame2)
+            yesAverage3 = np.mean(yesFlame3)
+
+            
+            lowestAverage=min(yesAverage1,yesAverage2,yesAverage3)
+            
+
+            #print "yes"
+            #print yesAverage1
+            #print yesAverage2
+            #print yesAverage3
+            
+            #first collection complete. Flag for second collection
+            Cflag=1
+            
         #Collect flame sensor and thermistor values when not near flame
-        if (GPIO.input(CButton) == 1 and Cflag == 0):
+        if (GPIO.input(CButton) == 1 and Cflag == 1):
             #blink status LED quickly
             for x in range(0,50):
                 time.sleep(.03)
@@ -95,51 +156,6 @@ def calibration(state):
             #print noAverage1
             #print noAverage2
             #print noAverage3
-
-            #first collection complete. Flag for second collection
-            Cflag=1
-            
-        #once no flame values collected, repeat for at flame collection
-        if (GPIO.input(CButton) == 1 and Cflag == 1):    
-            for x in range(0,50):
-                time.sleep(.03)
-                if (x<=3 or 6<x<=9 or 12<x<=15 or 18<x<=21 or 24<x<=27 or 30<x<=33 or 36<x<=39 or 42<x<=45 or 48<x<=50):
-                    GPIO.output(Status1, GPIO.HIGH)
-                else:
-                    GPIO.output(Status1, GPIO.LOW)
-                
-
-                Flame1reading = ADC.read_raw(Flame1)
-                Flame2reading = ADC.read_raw(Flame2)
-                Flame3reading = ADC.read_raw(Flame3)
-                yesFlame1 = yesFlame1 + [Flame1reading]
-                yesFlame2 = yesFlame2 + [Flame2reading]
-                yesFlame3 = yesFlame3 + [Flame3reading]
-
-            yesFlame1=[e for e in yesFlame1 if (np.median(yesFlame1)-2*np.std(yesFlame1) < e <np.median(yesFlame1) +2 * np.std(yesFlame1))]
-            if len(yesFlame1)==0:
-                yesFlame1=full
-            yesFlame2=[e for e in yesFlame2 if (np.median(yesFlame2)-2*np.std(yesFlame2) < e <np.median(yesFlame2) +2 * np.std(yesFlame2))]
-            if len(yesFlame2)==0:
-                yesFlame2=full
-            yesFlame3=[e for e in yesFlame3 if (np.median(yesFlame3)-2*np.std(yesFlame3) < e <np.median(yesFlame3) +2 * np.std(yesFlame3))]
-            if len(yesFlame3)==0:
-                yesFlame3=full
-            
-            yesAverage1 = np.mean(yesFlame1)
-            yesAverage2 = np.mean(yesFlame2)
-            yesAverage3 = np.mean(yesFlame3)
-
-            
-            lowestAverage=min(yesAverage1,yesAverage2,yesAverage3)
-            
-
-            #print "yes"
-            #print yesAverage1
-            #print yesAverage2
-            #print yesAverage3
-            
-            
             
             #Check for validity of values. Checks for large gap between no flame and at flame readings. 
             #Also prompts for redo when too many outliers found

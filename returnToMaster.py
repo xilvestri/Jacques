@@ -66,7 +66,7 @@ def returnToMaster(state):
         if SonarB<=30:
             count=count+1
             
-            if count>4:
+            if count>3:
                 driveCom="G"
                 ser.write(driveCom)
                 GPIO.output(Status1, GPIO.HIGH)

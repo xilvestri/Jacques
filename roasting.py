@@ -67,23 +67,29 @@ def roasting(state):
             #GPIO.output(motorB, GPIO.LOW)
             #PWM.set_duty_cycle(motorPWM, (0))
             GPIO.output(Status4, GPIO.LOW)
-            # pinMallow="b"                   #stop the mallow!
-            # ser.write(spinMallow)
             
         if (GPIO.input(SButton) == 1):
             state=9        #brings to pause state for manual advance
         
+        # timeNow=time.time()
+        # timePass=timeNow-timeStart
+        # if timeStart > 500 and reading<1370:
+        #     while(state==8):
+        #         GPIO.output(Status1, GPIO.HIGH)
+        #         GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed roast
+        #         GPIO.output(Status3, GPIO.HIGH)
+        #         GPIO.output(Status4, GPIO.LOW)
+        #         GPIO.output(Status5, GPIO.HIGH)
+        #         if (GPIO.input(SButton) == 1):
+        #             state=7        #brings to pause state for manual advance
+        
         timeNow=time.time()
         timePass=timeNow-timeStart
-        if timeStart > 120 and reading<1370:
-            while(state==8):
-                GPIO.output(Status1, GPIO.HIGH)
-                GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed roast
-                GPIO.output(Status3, GPIO.HIGH)
-                GPIO.output(Status4, GPIO.LOW)
-                GPIO.output(Status5, GPIO.HIGH)
-                if (GPIO.input(SButton) == 1):
-                    state=7        #brings to pause state for manual advance
+        if timeStart > 90:
+            # Position servo in up position
+            state = 10     #allows for immediate state change to return state
+            servoCom="Y"                #set servo to start position
+            ser.write(servoCom)
             
     
     return state

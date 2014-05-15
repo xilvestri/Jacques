@@ -65,13 +65,15 @@ def position(state, Status3,  minTherm):
         
         
         #reads thermistor to check quality of position
-        time.sleep(.3)
+        time.sleep(.35)
         thermistor=ADC.read_raw("P9_39")
         
         servoCount = servoCount +1
         
         #if thermistor angle is where we want it
-        if(thermistor>(50+minTherm)):
+        if(thermistor>(60+minTherm)):
+            servoCom="W"                    #move servo down (6) degrees 
+            ser.write(servoCom)
             state = 8    #allows for immediate state change to roasting
          
         

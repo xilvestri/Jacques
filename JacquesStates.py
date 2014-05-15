@@ -2,11 +2,24 @@
 
 import time
 import Adafruit_BBIO.GPIO as GPIO
+import Adafruit_BBIO.ADC as ADC
 import calibration
 import search
 import position
 import roasting
 import returnToMaster
+import Adafruit_BBIO.PWM as PWM
+import time
+
+motorPWM= "P8_19"
+motorA="P8_20"
+motorB="P8_21"
+
+GPIO.setup(motorA,GPIO.OUT)
+GPIO.setup(motorB,GPIO.OUT)
+
+ADC.setup()
+
 
 
 #---------Status LEDs---------
@@ -97,7 +110,13 @@ def buttonStatus(buttonPin,state):    #takes in the button pin number and the cu
 
     return command
     
-    
+
+PWM.start(motorPWM,0, 500)
+GPIO.output(motorA, GPIO.HIGH)
+GPIO.output(motorB, GPIO.LOW)
+PWM.set_duty_cycle(motorPWM, (0))
+GPIO.output(motorA, GPIO.LOW)
+
 state =1
 while (1):
     if ((state) != 0):

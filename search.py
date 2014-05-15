@@ -74,8 +74,9 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 def readSonar(sensorTrig, sensorEcho):
     
     signaloff=0
+    signalon=0
     status=1
-    while(signaloff==0) and status==1:
+    while((signaloff==0) and status==1) or(signalon==0 and status==1):
         time.sleep(.01)
         GPIO.output(sensorTrig, True)
         time.sleep(0.00001)
@@ -159,7 +160,7 @@ def center(driveCom, minAll, max1, max2, max3):
             state = 5                                #return a state of 5 so manual state control can occur
                     
         #wait for readings to level out    
-        time.sleep(.3)
+        time.sleep(.4)
         #read flame sensors
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
@@ -171,6 +172,13 @@ def center(driveCom, minAll, max1, max2, max3):
 
         
         #Check to be sure flame is, in fact, not centered
+        # if(lowestFlame>100):
+        #     driveCom="D"
+        #     ser.write(driveCom)
+        #     driveCom="G"
+        #     ser.write(driveCom)
+        #     time.sleep(.8)
+        
         if(lowestFlame != ScaledFlame2):
             if (ScaledFlame3 == lowestFlame):
                 driveCom="d"    #turn left
@@ -227,10 +235,10 @@ def inchUp(closeval, position, minAll, max1, max2, max3):
                     ser.write(driveCom)
                     position=2
                     
-                if(blinkCount<=6):
+                if(blinkCount<=3):
                     GPIO.output(Status2, GPIO.HIGH)
                     blinkCount = blinkCount+1
-                elif(6<blinkCount<=(6*2)):
+                elif(3<blinkCount<=(6)):
                     GPIO.output(Status2, GPIO.LOW)
                     blinkCount = blinkCount +1
                 else:
@@ -246,7 +254,7 @@ def inchUp(closeval, position, minAll, max1, max2, max3):
                     ready=0
                 
                 #if too far, inch forward
-                elif (SonarC>8):
+                elif (SonarC>9):
                     driveCom="c"
                     ser.write(driveCom)
                     ready=0
@@ -292,7 +300,7 @@ def search(state, max1, max2, max3, minAll):
     # relative distance based on calibration
     farval= 65
     medval=50
-    closeval=15
+    closeval=13
     blinkCount=0
     blinkTime=normalBlink
     
@@ -382,7 +390,7 @@ def search(state, max1, max2, max3, minAll):
                             if (GPIO.input(SButton) == 1):
                                 state = 3                                #return a state of 3 so manual state control can occur
                     
-                    if (lowest <= 26):
+                    if (lowest <= 20):
                         driveCom="G"
                         ser.write(driveCom)
                         thing=1
@@ -406,7 +414,12 @@ def search(state, max1, max2, max3, minAll):
 
                             #compare lowest flame against what is deemed as "close" Begin inching up in this range
                             lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
-                            if lowestFlame< closeval:
+                            if lowestFlame< (closeval*1.7):
+                                GPIO.output(Status1, GPIO.LOW)
+                                GPIO.output(Status2, GPIO.LOW)            #LED pattern low
+                                GPIO.output(Status3, GPIO.LOW)
+                                GPIO.output(Status4, GPIO.LOW)
+                                GPIO.output(Status5, GPIO.LOW)
                                 driveCom="G"
                                 ser.write(driveCom)
                                 position=inchUp(closeval, 0, minAll, max1, max2, max3)
@@ -420,7 +433,7 @@ def search(state, max1, max2, max3, minAll):
                             SonarC = readSonar(Ultra4T, Ultra4E)
                             SonarB = readSonar(Ultra3T, Ultra3E)
                             lowest= min( SonarC, SonarB)
-                            if (lowest > 26):
+                            if (lowest > 20):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
                                 GPIO.output(Status2, GPIO.HIGH)            #erase LED pattern
@@ -432,7 +445,7 @@ def search(state, max1, max2, max3, minAll):
                 #------------------------------------------------------------------comment out when no ultras present
                 
                 #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                if (lowestFlame != ScaledFlame2) or (lowestFlame >= 95)  :        
+                if (lowestFlame != ScaledFlame2) or (lowestFlame > 100)  :        
                     newDrive="G"
                     if (newDrive !=driveCom):
                         driveCom=newDrive
