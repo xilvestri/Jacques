@@ -6,6 +6,8 @@ import time
 import numpy as np
 
 # I'm different
+# different new line
+
 
 #Define Flame sensors
 Flame1 = "P9_40"
