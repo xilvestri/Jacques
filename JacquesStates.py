@@ -159,7 +159,7 @@ while (1):
         
         #roast marshmallow. End phase when core temperature reached
     if state == 8:
-        GPIO.output(Status1, GPIO.HIGH)
+        GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.LOW)            #LEDs for states
         GPIO.output(Status3, GPIO.LOW)
         GPIO.output(Status4, GPIO.HIGH)
@@ -170,7 +170,7 @@ while (1):
         
         #Return to master. End phase when arrived at master.
     if state == 10:
-        GPIO.output(Status1, GPIO.HIGH)
+        GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.LOW)            #LEDs for states
         GPIO.output(Status3, GPIO.LOW)
         GPIO.output(Status4, GPIO.LOW)

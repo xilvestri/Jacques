@@ -65,7 +65,7 @@ def position(state, Status3,  minTherm):
         
         
         #reads thermistor to check quality of position
-        time.sleep(.7)
+        time.sleep(.4)
         thermistor=ADC.read_raw("P9_39")
         
         servoCount = servoCount +1
@@ -75,7 +75,7 @@ def position(state, Status3,  minTherm):
             state = 8    #allows for immediate state change to roasting
          
         
-        elif (servoCount >= 33):
+        elif (servoCount >= 28):
             servoCount =0
             servoCom="Y"                #set servo to start position
             ser.write(servoCom)     

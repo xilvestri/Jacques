@@ -248,7 +248,7 @@ def search(state, max1, max2, max3, minAll):
     # relative distance based on calibration
     farval= 50
     medval=30
-    closeval=16
+    closeval=13
     blinkCount=0
     blinkTime=normalBlink
     
@@ -329,7 +329,6 @@ def search(state, max1, max2, max3, minAll):
                     if lowest == 0:
                         driveCom="G"
                         ser.write(driveCom)
-                        print "here"
                         while(state==4):
                             GPIO.output(Status1, GPIO.HIGH)
                             GPIO.output(Status2, GPIO.HIGH)            #LED pattern for failed ultrasonic
@@ -369,14 +368,15 @@ def search(state, max1, max2, max3, minAll):
                 #------------------------------------------------------------------comment out when no ultras present
                 
                 #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                # if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        
-                #     newDrive="G"
-                #     if (newDrive !=driveCom):
-                #         driveCom=newDrive
-                #         ser.write(driveCom)
-                #     centered = center(driveCom, minAll, max1, max2, max3)
+                if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        
+                    newDrive="G"
+                    if (newDrive !=driveCom):
+                        driveCom=newDrive
+                        ser.write(driveCom)
+                    centered = center(driveCom, minAll, max1, max2, max3)
                  
                 
+                #check state to be sure that no changes have been made
                 if state==4:   
 
                     #print("lowest: " + str(lowestFlame))
