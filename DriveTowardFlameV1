@@ -1,0 +1,73 @@
+#!/usr/bin/python
+
+import time
+import Adafruit_BBIO.GPIO as GPIO
+import Adafruit_BBIO.UART as UART
+import serial
+
+state ="NotCentered"
+
+Ultra1E="P9_15"
+Ultra1T="P9_11"
+Ultra2E="P9_27"
+Ultra2T="P9_25"
+Ultra3E="P8_16"
+Ultra3T="P8_15"
+
+GPIO.setup(Ultra1E, GPIO.IN)
+GPIO.setup(Ultra1T, GPIO.OUT)
+GPIO.setup(Ultra2E, GPIO.IN)
+GPIO.setup(Ultra2T, GPIO.OUT)
+GPIO.setup(Ultra3E, GPIO.IN)
+GPIO.setup(Ultra3T, GPIO.OUT)
+
+GPIO.output(Ultra1T, GPIO.LOW)
+GPIO.output(Ultra2T, GPIO.LOW)
+GPIO.output(Ultra3T, GPIO.LOW)
+
+driveCom = "F"
+UART.setup("UART1")
+ser = serial.Serial(port = "/dev/ttyO1", baudrate = 9600)
+
+ser.open()
+
+def readSonar(sensorTrig, sensorEcho):
+    time.sleep(.01)
+    signaloff=0
+    while(signaloff==0):
+        GPIO.output(sensorTrig, True)
+        time.sleep(0.00001)
+        GPIO.output(sensorTrig, False)
+        
+        while GPIO.input(sensorEcho) == 0:
+            signaloff = time.time()
+            
+        while GPIO.input(sensorEcho) == 1:
+            signalon= time.time()
+        
+    timepassed = signalon - signaloff
+        
+    distance = timepassed *17000
+    
+    return distance
+        
+    GPIO.cleanup()
+
+
+while(state != "centered"):
+
+    driveCom = "C"
+    
+    SonarR = readSonar(Ultra1T, Ultra1E)
+    SonarL= readSonar(Ultra2T, Ultra2E)
+    SonarC = readSonar(Ultra3T, Ultra3E)
+    lowest= min(SonarR, SonarL, SonarC)
+    
+    #print "right: " + str(SonarR)
+    #print "left: " + str(SonarL)
+    #print "center: " + str(SonarC)
+    if lowest <= 15:
+        driveCom="F"
+        print "STOP!!!!"
+
+    ser.write(driveCom)
