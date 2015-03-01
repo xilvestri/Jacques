@@ -3,6 +3,7 @@
 import time
 import Adafruit_BBIO.GPIO as GPIO
 import calibration
+import search
 
 Status1="P8_11"
 Status2="P8_12"
@@ -89,11 +90,19 @@ while (1):
         print "calibration begun"
         Cresult = calibration.calibration() # returns: 'state':state, 'maxVal1': noAverage1, 'maxVal2':noAverage2,'maxVal3': noAverage3,'minVal1': yesAverage1,'minVal2': yesAverage2,'minVal3': noAverage3
         state= Cresult['state']
+        max1= Cresult['maxVal1']
+        max2= Cresult['maxVal2']
+        max3= Cresult['maxVal3']
+        min1= Cresult['minVal1']
+        min2= Cresult['minVal2']
+        min3= Cresult['minVal3']
+        
         time.sleep(1)
     if state == 4:
         GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.HIGH)
         print "searching for flame"
+        state=search.search(state, max1, max2, max3, min1, min2, min3)
         time.sleep(1)
     if state == 6:
         GPIO.output(Status2, GPIO.LOW)
