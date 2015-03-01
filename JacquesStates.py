@@ -4,6 +4,7 @@ import time
 import Adafruit_BBIO.GPIO as GPIO
 import calibration
 import search
+import position
 
 Status1="P8_11"
 Status2="P8_12"
@@ -108,6 +109,7 @@ while (1):
         GPIO.output(Status2, GPIO.LOW)
         GPIO.output(Status3, GPIO.HIGH)
         print "positioning marshmallow"
+        state=position.position(state)
         time.sleep(1)
     if state == 8:
         GPIO.output(Status3, GPIO.LOW)
