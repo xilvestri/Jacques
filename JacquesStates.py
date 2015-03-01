@@ -2,6 +2,7 @@
 
 import time
 import Adafruit_BBIO.GPIO as GPIO
+import calibration
 
 Status1="P8_11"
 Status2="P8_12"
@@ -9,7 +10,7 @@ Status3="P8_13"
 Status4="P8_14"
 Status5="P8_17"
 
-Button= "P8_10"
+SButton= "P8_10"
 
 
 GPIO.setup(Status1, GPIO.OUT)
@@ -17,7 +18,7 @@ GPIO.setup(Status2, GPIO.OUT)
 GPIO.setup(Status3, GPIO.OUT)
 GPIO.setup(Status4, GPIO.OUT)
 GPIO.setup(Status5, GPIO.OUT)
-GPIO.setup(Button, GPIO.IN)
+GPIO.setup(SButton, GPIO.IN)
 
 GPIO.output(Status1, GPIO.LOW)
 GPIO.output(Status2, GPIO.LOW)
@@ -76,29 +77,40 @@ def buttonStatus(buttonPin,state):
     return command
     
     
-def states (command):
-
-    if command == "c":
-        state= "Calibrate"
-    elif command == "s":
-        state = "Search"
-    elif command == "p":
-        state= "Position"
-    elif command == "ro":
-        state = "Roast"
-    elif command == "re":
-        state= "return"
-    elif command == "o":
-        state = "sleep"
-    else:
-        state = "none"
-    
-    return state
-    
 state =0
 while (1):
 #    command = raw_input("state? (c/s/p/ro/re):")
 #    print state
-    if GPIO.input(Button) == 1:
-        state = buttonStatus(Button,state)
+    if GPIO.input(SButton) == 1:
+        state = buttonStatus(SButton,state)   #state 0=sleep, 2 = calibrate, 4 = search, 6 = position, 8=roast, 10 = return, 12=off, if button hit while sleep, will restart count and calibrate
 #    time.sleep(1)
+    if state ==2:
+        GPIO.output(Status1, GPIO.HIGH)
+        print "calibration begun"
+        Cresult = calibration.calibration() # returns: 'state':state, 'maxVal1': noAverage1, 'maxVal2':noAverage2,'maxVal3': noAverage3,'minVal1': yesAverage1,'minVal2': yesAverage2,'minVal3': noAverage3
+        state= Cresult['state']
+        time.sleep(1)
+    if state == 4:
+        GPIO.output(Status1, GPIO.LOW)
+        GPIO.output(Status2, GPIO.HIGH)
+        print "searching for flame"
+        time.sleep(1)
+    if state == 6:
+        GPIO.output(Status2, GPIO.LOW)
+        GPIO.output(Status3, GPIO.HIGH)
+        print "positioning marshmallow"
+        time.sleep(1)
+    if state == 8:
+        GPIO.output(Status3, GPIO.LOW)
+        GPIO.output(Status4, GPIO.HIGH)
+        print "roasting in progress"
+        time.sleep(1)
+    if state == 10:
+        GPIO.output(Status4, GPIO.LOW)
+        GPIO.output(Status5, GPIO.HIGH)
+        print "roast complete, return now"
+        time.sleep(1)
+
+    if state == 12:
+        GPIO.output(Status5, GPIO.LOW)
+        print "sleep mode"
