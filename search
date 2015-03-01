@@ -1,0 +1,39 @@
+#!/usr/bin/python
+import Adafruit_BBIO.ADC as ADC
+import Adafruit_BBIO.GPIO as GPIO
+import time
+
+
+Flame1 = "P9_40"
+Flame2 = "P9_38"
+Flame3 = "P9_36"
+Status2="P8_12"
+SButton= "P8_18"
+ADC.setup()
+
+Cflag = 0
+blinkCount=0
+
+def search(state, max1, max2, max3, min1, min2, min3):
+    Cflag = 0
+    blinkCount=0
+    while state == 4:
+        if(blinkCount<=700):
+             GPIO.output(Status2, GPIO.HIGH)
+             blinkCount = blinkCount+1
+        elif(700<blinkCount<=1400):
+             GPIO.output(Status2, GPIO.LOW)
+             blinkCount = blinkCount +1
+        else:
+            blinkCount=0
+        
+        if (GPIO.input(SButton) == 1 and Cflag == 0):
+            print "driving driving driving"
+            time.sleep(2)
+            print "made it! :)"
+            #Put real driving code here, and stop at flame
+            state = 6
+            
+    
+    return state
+        
