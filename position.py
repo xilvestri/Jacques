@@ -7,32 +7,56 @@ import time
 Flame1 = "P9_40"
 Flame2 = "P9_38"
 Flame3 = "P9_36"
+thermistor = "P9_39"
 Status3="P8_13"
-PButton= "P8_18"
+SButton= "P8_10"
 ADC.setup()
 
-Cflag = 0
-blinkCount=0
 
-def position(state):
-    Cflag = 0
+
+def position(state, maxTherm, minTherm):
     blinkCount=0
+    blinkTime=runBlink
+    
+    spinMallow=0                   #spin the mallow!
+    ser.write(spinMallow)
+    time.sleep(.2)
+    servoCom="Y"                #set servo to start position
+    ser.write(servoCom) 
+    
     while state == 6:
-        if(blinkCount<=700):
-             GPIO.output(Status3, GPIO.HIGH)
-             blinkCount = blinkCount+1
-        elif(700<blinkCount<=1400):
-             GPIO.output(Status3, GPIO.LOW)
-             blinkCount = blinkCount +1
-        else:
+        if (GPIO.input(SButton) == 1):
+            state = 7                                #return a state of 7 so manual state control can occur
+            
+        if(blinkCount<=blinkTime):
+            GPIO.output(Status2, GPIO.HIGH)
+            blinkCount = blinkCount+1
+        elif(blinkTime<blinkCount<=(blinkTime*2)):
+            GPIO.output(Status2, GPIO.LOW)
+            blinkCount = blinkCount +1
+            else:
             blinkCount=0
+            
         
-        if (GPIO.input(PButton) == 1 and Cflag == 0):
-            print "Positioning positioning positioning"
-            time.sleep(2)
-            print "there ya go. Perfect! :)"
-            #Put real positioning code here
-            state = 8
+        servoCom="Z"                    #move servo down (3) degrees 
+        ser.write(servoCom)
+        
+        
+        #reads thermistor to check quality of position
+        time.sleep(.6)
+        thermistor=ADC.read_raw(thermistor)
+        
+        #if thermistor angle is where we want it
+        if(thermistor>((maxTherm+minTherm)*2/3)):
+            state = 8    #allows for immediate state change to roasting
+            
+        servoState=ser.read()           #reads in current servo position
+        elif (servoState >= 90):
+            servoCom="Y"                #set servo to start position
+            ser.write(servoCom)     
+            startCount=startCount +1    #try again?
+            if startCount==2:           #go back to search
+                state=4
             
     
     return state
