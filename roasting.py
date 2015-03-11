@@ -9,14 +9,14 @@ Flame2 = "P9_38"
 Flame3 = "P9_36"
 Status4="P8_14"
 RButton= "P8_18"
+SButton= "P8_10"
+probe = 'P9_39'
 ADC.setup()
 
-Cflag = 0
-blinkCount=0
 
 def roasting(state):
-    Cflag = 0
     blinkCount=0
+    timeStart=time.time()
     while state == 8:
         if(blinkCount<=700):
              GPIO.output(Status4, GPIO.HIGH)
@@ -26,13 +26,27 @@ def roasting(state):
              blinkCount = blinkCount +1
         else:
             blinkCount=0
+            
+        reading = ADC.read_raw(probe)
         
-        if (GPIO.input(RButton) == 1 and Cflag == 0):
-            print "Roasting Roasting Roasting"
-            time.sleep(2)
-            print "Yummy :)"
-            #Put real positioning code here
-            state = 10
+        if (reading> 1444):
+            # Position servo in up position
+            state = 10     #allows for immediate state change to return state
+            
+        if (GPIO.input(SButton) == 1):
+            state=9        #brings to pause state for manual advance
+        
+        timeNow=time.time()
+        timePass=timeNow-timeStart
+        if timeStart > 120 and reading<1370:
+            while(state==8):
+            GPIO.output(Status1, GPIO.HIGH)
+            GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed roast
+            GPIO.output(Status3, GPIO.HIGH)
+            GPIO.output(Status4, GPIO.LOW)
+            GPIO.output(Status5, GPIO.HIGH)
+            if (GPIO.input(SButton) == 1):
+                state=7        #brings to pause state for manual advance
             
     
     return state
