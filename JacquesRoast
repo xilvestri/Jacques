@@ -1,0 +1,70 @@
+#!/usr/bin/python
+import Adafruit_BBIO.ADC as ADC
+import Adafruit_BBIO.GPIO as GPIO
+import time
+
+
+Flame1 = "P9_40"
+Flame2 = "P9_38"
+Flame3 = "P9_36"
+Status1="P8_11"
+Status2="P8_12"
+Status3="P8_13"
+Status4="P8_14"
+Status5="P8_17"
+SButton= "P8_10"
+probe = 'P9_37'
+ADC.setup()
+
+GPIO.setup(Status1, GPIO.OUT)
+GPIO.setup(Status2, GPIO.OUT)
+GPIO.setup(Status3, GPIO.OUT)
+GPIO.setup(Status4, GPIO.OUT)
+GPIO.setup(Status5, GPIO.OUT)
+GPIO.setup(SButton, GPIO.IN)
+
+
+def roasting(state):
+    blinkCount=0
+    timeStart=time.time()
+    while state == 8:
+        if(blinkCount<=700):
+             GPIO.output(Status4, GPIO.HIGH)
+             blinkCount = blinkCount+1
+        elif(700<blinkCount<=1400):
+             GPIO.output(Status4, GPIO.LOW)
+             blinkCount = blinkCount +1
+        else:
+            blinkCount=0
+            
+        reading = ADC.read_raw(probe)
+        
+        if (reading> 1444):
+            # Position servo in up position
+            state = 10     #allows for immediate state change to return state
+            servoCom="Y"                #set servo to start position
+            ser.write(servoCom)
+            pinMallow="b"                   #stop the mallow!
+            ser.write(spinMallow)
+            print"ready to return!"
+            
+        if (GPIO.input(SButton) == 1):
+            state=9        #brings to pause state for manual advance
+        
+        timeNow=time.time()
+        timePass=timeNow-timeStart
+        if timeStart > 120 and reading<1370:
+            while(state==8):
+                GPIO.output(Status1, GPIO.HIGH)
+                GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed roast
+                GPIO.output(Status3, GPIO.HIGH)
+                GPIO.output(Status4, GPIO.LOW)
+                GPIO.output(Status5, GPIO.HIGH)
+                if (GPIO.input(SButton) == 1):
+                    state=7        #brings to pause state for manual advance
+                    print"help please. I don't think I'm roasting right :("
+            
+    
+    return state
+
+roasting(8)
