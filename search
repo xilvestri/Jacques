@@ -20,13 +20,13 @@ SeButton= "P8_18"
 ADC.setup()
 
 Ultra1E="P9_15"
-Ultra1T="P9_11"
+Ultra1T="P9_13"
 Ultra2E="P9_27"
 Ultra2T="P9_25"
 Ultra3E="P8_16"
 Ultra3T="P8_15"
 Ultra4E="P9_16"
-Ultra4T="P9_13"
+Ultra4T="P9_11"
 
 GPIO.setup(Ultra1E, GPIO.IN)
 GPIO.setup(Ultra1T, GPIO.OUT)
@@ -217,10 +217,10 @@ def search(state, max1, max2, max3, min1, min2, min3):
             
             #-----------------------------------------------------------------------comment out when no ultras present 
                 #if lowestFlame >= closeVal:
-                    # SonarR = readSonar(Ultra1T, Ultra1E)
+                    # SonarR = readSonar(Ultra4T, Ultra4E)
                     # SonarL= readSonar(Ultra3T, Ultra3E)
                     # SonarC = readSonar(Ultra2T, Ultra2E)
-                    # SonarB = readSonar(Ultra4T, Ultra4E)
+                    # SonarB = readSonar(Ultra1T, Ultra1E)
                     # lowest= min(SonarR, SonarL, SonarC, SonarB)
                     # if lowest == 0:
                     #     driveCom="G"
