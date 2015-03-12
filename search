@@ -152,7 +152,7 @@ def center():
 
 def search(state, max1, max2, max3, min1, min2, min3):
     
-    flameDistance=4           #distance center ultrasonic is away from desired flame
+    flameDistance=5           #distance center ultrasonic is away from desired flame
     farval= 70
     medval=40
     closeval=20
@@ -243,10 +243,12 @@ def search(state, max1, max2, max3, min1, min2, min3):
             
                 #------------------------------------------------------------------comment out when no ultras present
             
-                
+                if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        #if the flame isn't too close or too far, flame sensors should have a large difference between sides
+                    centered = center()
+                    
 
                 #print("lowest: " + str(lowestFlame))
-                if lowestFlame >= farval:
+                if lowestFlame >= farval:                               #Determine speed of robot based on perceived distance
                     driveCom="C"
                 elif (lowestFlame >=medval):
                     driveCom="B"
@@ -257,12 +259,12 @@ def search(state, max1, max2, max3, min1, min2, min3):
                 ser.write(driveCom)
       
                 if lowestFlame <=closeval:
-                    centered = center()          #Centering code here
-                    if centered ==1:
+                    centered = center()          #Centering up robot
+                    elif centered ==1:
                         SonarC = readSonar(Ultra2T, Ultra2E)       #inch up to flame stand
-                            if SonarC<flameDistance:
+                            if SonarC<1-flameDistance:
                                 driveCom="F"
-                            elif SonarC>flameDistance:
+                            elif SonarC>1+flameDistance:
                                 driveCom="A"
                             else:
                                 # print "made it! :)"
