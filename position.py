@@ -38,7 +38,7 @@ def position(state, maxTherm, minTherm):
             blinkCount=0
             
         
-        servoCom="Z"                    #move servo down (3) degrees 
+        servoCom="Z"                    #move servo down (6) degrees 
         ser.write(servoCom)
         
         
@@ -47,7 +47,7 @@ def position(state, maxTherm, minTherm):
         thermistor=ADC.read_raw(thermistor)
         
         #if thermistor angle is where we want it
-        if(thermistor>((maxTherm+minTherm)*2/3)):
+        if(thermistor>((maxTherm+minTherm)*3/5)):
             state = 8    #allows for immediate state change to roasting
             
         servoState=ser.read()           #reads in current servo position
