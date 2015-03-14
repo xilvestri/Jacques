@@ -119,6 +119,8 @@ while (1):
         minAll= Cresult['minVal']
         maxTherm = Cresult['maxTherm']
         minTherm = Cresult['minTherm']
+        print maxTherm
+        print minTherm
         
         time.sleep(1)
         
@@ -126,7 +128,7 @@ while (1):
     if state == 4:
         GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.HIGH)
-        print "searching for flame"
+        #print "searching for flame"
         state=search.search(state, max1, max2, max3, minAll)
         time.sleep(1)
         
@@ -134,7 +136,7 @@ while (1):
     if state == 6:
         GPIO.output(Status2, GPIO.LOW)
         GPIO.output(Status3, GPIO.HIGH)
-        print "positioning marshmallow"
+        #print "positioning marshmallow"
         state=position.position(state, maxTherm, minTherm)
         time.sleep(1)
         
@@ -143,7 +145,7 @@ while (1):
         GPIO.output(Status3, GPIO.LOW)
         GPIO.output(Status4, GPIO.HIGH)
         print "roasting in progress"
-        state= roasting.roasting(state)
+        #state= roasting.roasting(state)
         time.sleep(1)
         
         #Return to master. End phase when arrived at master.
