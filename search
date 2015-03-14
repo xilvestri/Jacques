@@ -97,8 +97,9 @@ def readSonar(sensorTrig, sensorEcho):
         
     GPIO.cleanup()
     
-def center():
-    
+def center(driveCom, minAll, max1, max2, max3):
+    blinkCount=0
+    count = 0
     centered=0                         #if program called, Jacques currently not centered
     while(centered==0):                #while not centered
         
@@ -118,16 +119,16 @@ def center():
                 count = count+ 1
             if(count >70):
                 driveCom= "G"
-#               print str(driveCom)
-                ser.write(driveCom)
+                print str(driveCom)
+#                ser.write(driveCom)
                 count = 0 
             
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
         Flame3reading = ADC.read_raw(Flame3)
-        ScaledFlame1=translate(Flame1reading, min1, max1, 5, 100)
-        ScaledFlame2=translate(Flame2reading, min2, max2, 5, 100)
-        ScaledFlame3=translate(Flame3reading, min3, max3, 5, 100)
+        ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
+        ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
+        ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
         lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
 
         
@@ -137,20 +138,22 @@ def center():
                 driveCom="D"             #turn left
             else:
                 driveCom= "E"            #turn right
-            ser.write(driveCom)
+            #ser.write(driveCom)
+            print str(driveCom)
             
         else:
             driveCom="G"
-            ser.write(driveCom)
+            #ser.write(driveCom)
+            print str(driveCom)
             centered=1        #flame centered
             
         
     
-    return centered             #how centered?
+    return centered             # centered?
         
     GPIO.cleanup()
 
-def search(state, max1, max2, max3, min1, min2, min3):
+def search(state, max1, max2, max3, minAll):
     
     flameDistance=5           #distance center ultrasonic is away from desired flame
     farval= 70
@@ -182,7 +185,8 @@ def search(state, max1, max2, max3, min1, min2, min3):
             while state ==4:
                 if (GPIO.input(SButton) == 1):
                     driveCom="G"
-                    ser.write(driveCom)
+                    #ser.write(driveCom)
+                    print str(driveCom)
                     state = 5                                #return a state of 5 so manual state control can occur
        
        
@@ -195,18 +199,19 @@ def search(state, max1, max2, max3, min1, min2, min3):
                 else:
                     blinkCount=0
                 
-                ser.write(driveCom)
+                #ser.write(driveCom)
+                print str(driveCom)
                 
-                                Flame1reading = ADC.read_raw(Flame1)
+                Flame1reading = ADC.read_raw(Flame1)
                 Flame2reading = ADC.read_raw(Flame2)
                 Flame3reading = ADC.read_raw(Flame3)
                 # print(Flame1reading)
                 # print(Flame2reading)
                 # print(Flame3reading)
                 
-                ScaledFlame1=translate(Flame1reading, min1, max1, 5, 100)
-                ScaledFlame2=translate(Flame2reading, min2, max2, 5, 100)
-                ScaledFlame3=translate(Flame3reading, min3, max3, 5, 100)
+                ScaledFlame1=translate(Flame1reading, minAll, max1, 5, 100)
+                ScaledFlame2=translate(Flame2reading, minAll, max2, 5, 100)
+                ScaledFlame3=translate(Flame3reading, minAll, max3, 5, 100)
                 # print(ScaledFlame1)
                 # print(ScaledFlame2)
                 # print(ScaledFlame3) 
@@ -222,10 +227,10 @@ def search(state, max1, max2, max3, min1, min2, min3):
                     # SonarC = readSonar(Ultra2T, Ultra2E)
                     # SonarB = readSonar(Ultra1T, Ultra1E)
                     # lowest= min(SonarR, SonarL, SonarC, SonarB)
-                    # if lowest == 0:
+                    # if lowest < 0:
                     #     driveCom="G"
                     #     ser.write(driveCom)
-                    #     while(state==41):
+                    #     while(state==4):
                     #         GPIO.output(Status1, GPIO.HIGH)
                     #         GPIO.output(Status2, GPIO.LOW)            #LED pattern for failed ultrasonic
                     #         GPIO.output(Status3, GPIO.HIGH)
@@ -244,7 +249,7 @@ def search(state, max1, max2, max3, min1, min2, min3):
                 #------------------------------------------------------------------comment out when no ultras present
             
                 if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                    centered = center()
+                    centered = center(driveCom, minAll, max1, max2, max3)
                     
 
                 #print("lowest: " + str(lowestFlame))
@@ -256,22 +261,24 @@ def search(state, max1, max2, max3, min1, min2, min3):
                     driveCom="A"    
                 elif lowestFlame <=closeval:
                     driveCom="G"
-                ser.write(driveCom)
+                #ser.write(driveCom)
+                print str(driveCom)
       
                 if lowestFlame <=closeval:
-                    centered = center()          #Centering up robot
-                    elif centered ==1:
+                    centered = center(driveCom, minAll, max1, max2, max3)          #Centering up robot
+                    if centered ==1:
                         SonarC = readSonar(Ultra2T, Ultra2E)       #inch up to flame stand
-                            if SonarC<1-flameDistance:
-                                driveCom="F"
-                            elif SonarC>1+flameDistance:
-                                driveCom="A"
-                            else:
-                                # print "made it! :)"
-                                driveCom="G"
-                                ser.write(driveCom)
-                                state = 6                              #allows for immediate state change to position once complete
+                        if SonarC<1-flameDistance:
+                            driveCom="F"
+                        elif SonarC>1+flameDistance:
+                            driveCom="A"
+                        else:
+                            # print "made it! :)"
+                            driveCom="G"
+                            state = 6                              #allows for immediate state change to position once complete
+                            
+                #ser.write(driveCom)
+                print str(driveCom)
             
     
     return state
-        
