@@ -2,6 +2,7 @@
 import Adafruit_BBIO.ADC as ADC
 import Adafruit_BBIO.GPIO as GPIO
 import time
+import serial
 
 
 Flame1 = "P9_40"
@@ -17,28 +18,30 @@ ADC.setup()
 def position(state, maxTherm, minTherm):
     blinkCount=0
     blinkTime=runBlink
+    startCount =0
+    servoCount =0
     
-    spinMallow=0                   #spin the mallow!
-    ser.write(spinMallow)
-    time.sleep(.2)
-    servoCom="Y"                #set servo to start position
-    ser.write(servoCom) 
+    # spinMallow=0                   #spin the mallow!
+    # ser.write(spinMallow)
+    # time.sleep(.2)
+    # servoCom="Y"                #set servo to start position
+    # ser.write(servoCom) 
     
     while state == 6:
         if (GPIO.input(SButton) == 1):
             state = 7                                #return a state of 7 so manual state control can occur
             
-        if(blinkCount<=blinkTime):
+        if(blinkCount<=1):
             GPIO.output(Status2, GPIO.HIGH)
             blinkCount = blinkCount+1
-        elif(blinkTime<blinkCount<=(blinkTime*2)):
+        elif(1<blinkCount<=3):
             GPIO.output(Status2, GPIO.LOW)
             blinkCount = blinkCount +1
-            else:
+        else:
             blinkCount=0
             
         
-        servoCom="Z"                    #move servo down (6) degrees 
+        servoCom="W"                    #move servo down (6) degrees 
         ser.write(servoCom)
         
         
@@ -46,12 +49,15 @@ def position(state, maxTherm, minTherm):
         time.sleep(.6)
         thermistor=ADC.read_raw(thermistor)
         
+        servoCount = servoCOunt +1
+        
         #if thermistor angle is where we want it
         if(thermistor>((maxTherm+minTherm)*3/5)):
             state = 8    #allows for immediate state change to roasting
-            
-        servoState=ser.read()           #reads in current servo position
-        elif (servoState >= 90):
+         
+        
+        elif (servoCount >= 33):
+            servoCount =0
             servoCom="Y"                #set servo to start position
             ser.write(servoCom)     
             startCount=startCount +1    #try again?
@@ -60,4 +66,3 @@ def position(state, maxTherm, minTherm):
             
     
     return state
-        
