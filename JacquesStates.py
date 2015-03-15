@@ -117,9 +117,7 @@ while (1):
         max2= Cresult['maxVal2']           #Collect average flame sensor readings for the particular environment
         max3= Cresult['maxVal3']
         minAll= Cresult['minVal']
-        maxTherm = Cresult['maxTherm']
         minTherm = Cresult['minTherm']
-        print maxTherm
         print minTherm
         
         time.sleep(1)
@@ -137,7 +135,7 @@ while (1):
         GPIO.output(Status2, GPIO.LOW)
         GPIO.output(Status3, GPIO.HIGH)
         #print "positioning marshmallow"
-        state=position.position(state, maxTherm, minTherm)
+        state=position.position(state, Status3, minTherm)
         time.sleep(1)
         
         #roast marshmallow. End phase when core temperature reached
