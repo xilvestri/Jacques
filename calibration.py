@@ -128,8 +128,7 @@ def calibration(state):
             
             lowestAverage=min(yesAverage1,yesAverage2,yesAverage3)
             
-        
-            yesthermistor=ADC.read_raw(thermistor)
+
             print "yes"
             print yesAverage1
             print yesAverage2
@@ -151,4 +150,4 @@ def calibration(state):
                 Cflag=2
 
             
-    return {'state':state, 'maxVal1': noAverage1, 'maxVal2':noAverage2,'maxVal3': noAverage3,'minVal': lowestAverage, 'maxTherm':yesthermistor, 'minTherm': nothermistor}
+    return {'state':state, 'maxVal1': noAverage1, 'maxVal2' : noAverage2, 'maxVal3': noAverage3, 'minVal': lowestAverage, 'minTherm': nothermistor}
