@@ -13,13 +13,16 @@ Status3="P8_13"
 SButton= "P8_10"
 ADC.setup()
 
+ser = serial.Serial(port = "/dev/ttyO1", baudrate = 9600)
+
+ser.open()
 
 
-def position(state, maxTherm, minTherm):
+def position(state, Status3,  minTherm):
     blinkCount=0
-    blinkTime=runBlink
     startCount =0
     servoCount =0
+    thermistor="P9_39"
     
     # spinMallow=0                   #spin the mallow!
     # ser.write(spinMallow)
@@ -32,10 +35,10 @@ def position(state, maxTherm, minTherm):
             state = 7                                #return a state of 7 so manual state control can occur
             
         if(blinkCount<=1):
-            GPIO.output(Status2, GPIO.HIGH)
+            GPIO.output(Status3, GPIO.HIGH)
             blinkCount = blinkCount+1
         elif(1<blinkCount<=3):
-            GPIO.output(Status2, GPIO.LOW)
+            GPIO.output(Status3, GPIO.LOW)
             blinkCount = blinkCount +1
         else:
             blinkCount=0
@@ -47,12 +50,12 @@ def position(state, maxTherm, minTherm):
         
         #reads thermistor to check quality of position
         time.sleep(.6)
-        thermistor=ADC.read_raw(thermistor)
+        thermistor=ADC.read_raw("P9_39")
         
-        servoCount = servoCOunt +1
+        servoCount = servoCount +1
         
         #if thermistor angle is where we want it
-        if(thermistor>((maxTherm+minTherm)*3/5)):
+        if(thermistor>(50+minTherm)):
             state = 8    #allows for immediate state change to roasting
          
         
@@ -62,6 +65,7 @@ def position(state, maxTherm, minTherm):
             ser.write(servoCom)     
             startCount=startCount +1    #try again?
             if startCount==2:           #go back to search
+                GPIO.output(Status3, GPIO.LOW)
                 state=4
             
     
