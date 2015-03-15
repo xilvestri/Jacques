@@ -273,7 +273,7 @@ def search(state, max1, max2, max3, minAll):
                         elif SonarC>1+flameDistance:
                             driveCom="A"
                         else:
-                            # print "made it! :)"
+                            print "made it! :)"
                             driveCom="G"
                             state = 6                              #allows for immediate state change to position once complete
                             
