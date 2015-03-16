@@ -27,6 +27,7 @@ def calibration(state):
     yesFlame1 = []
     yesFlame2 = []
     yesFlame3 = []
+    full=[1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0, 1799.0,]
     
     #Cflag set for what stage of calibration the button collects for
     Cflag=0
@@ -37,10 +38,10 @@ def calibration(state):
     while (state== 2):
         
         #Blinks LED when waiting for calibration command
-        if(blinkCount<=700):
+        if(blinkCount<=1000):
              GPIO.output(Status1, GPIO.HIGH)
              blinkCount = blinkCount+1
-        elif(700<blinkCount<=1400):
+        elif(1000<blinkCount<=2000):
              GPIO.output(Status1, GPIO.LOW)
              blinkCount = blinkCount +1
         else:
@@ -54,7 +55,8 @@ def calibration(state):
         if (GPIO.input(CButton) == 1 and Cflag == 0):
             #blink status LED quickly
             for x in range(0,50):
-                if (x<=5 or 10<x<=15 or 20<x<=25 or 30<x<=35 or 40<x<=45):
+                time.sleep(.03)
+                if (x<=3 or 6<x<=9 or 12<x<=15 or 18<x<=21 or 24<x<=27 or 30<x<=33 or 36<x<=39 or 42<x<=45 or 48<x<=50):
                     GPIO.output(Status1, GPIO.HIGH)
                 else:
                     GPIO.output(Status1, GPIO.LOW)
@@ -71,19 +73,19 @@ def calibration(state):
             
             #eliminate outliers if found
             noFlame1=[e for e in noFlame1 if (np.median(noFlame1)-2*np.std(noFlame1) < e <np.median(noFlame1) +2 * np.std(noFlame1))]
+            if len(noFlame1)==0:
+                noFlame1=full
             noFlame2=[e for e in noFlame2 if (np.median(noFlame2)-2*np.std(noFlame2) < e <np.median(noFlame2) +2 * np.std(noFlame2))]
+            if len(noFlame2)==0:
+                noFlame2=full
             noFlame3=[e for e in noFlame3 if (np.median(noFlame3)-2*np.std(noFlame3) < e <np.median(noFlame3) +2 * np.std(noFlame3))]
+            if len(noFlame3)==0:
+                noFlame3=full
             
             #takes average of values and stores for future use.
             noAverage1 = np.mean(noFlame1)
-            if noAverage1== "nan":
-                yesAverage1=1799.0
             noAverage2 = np.mean(noFlame2)
-            if noAverage2== "nan":
-                yesAverage2=1799.0
             noAverage3 = np.mean(noFlame3)
-            if noAverage3== "nan":
-                yesAverage3=1799.0
             
             #reads a thermistor value
             nothermistor=ADC.read_raw(thermistor)
@@ -99,7 +101,8 @@ def calibration(state):
         #once no flame values collected, repeat for at flame collection
         if (GPIO.input(CButton) == 1 and Cflag == 1):    
             for x in range(0,50):
-                if (x<=5 or 10<x<=15 or 20<x<=25 or 30<x<=35 or 40<x<=45):
+                time.sleep(.03)
+                if (x<=3 or 6<x<=9 or 12<x<=15 or 18<x<=21 or 24<x<=27 or 30<x<=33 or 36<x<=39 or 42<x<=45 or 48<x<=50):
                     GPIO.output(Status1, GPIO.HIGH)
                 else:
                     GPIO.output(Status1, GPIO.LOW)
@@ -113,18 +116,19 @@ def calibration(state):
                 yesFlame3 = yesFlame3 + [Flame3reading]
 
             yesFlame1=[e for e in yesFlame1 if (np.median(yesFlame1)-2*np.std(yesFlame1) < e <np.median(yesFlame1) +2 * np.std(yesFlame1))]
+            if len(yesFlame1)==0:
+                yesFlame1=full
             yesFlame2=[e for e in yesFlame2 if (np.median(yesFlame2)-2*np.std(yesFlame2) < e <np.median(yesFlame2) +2 * np.std(yesFlame2))]
+            if len(yesFlame2)==0:
+                yesFlame2=full
             yesFlame3=[e for e in yesFlame3 if (np.median(yesFlame3)-2*np.std(yesFlame3) < e <np.median(yesFlame3) +2 * np.std(yesFlame3))]
+            if len(yesFlame3)==0:
+                yesFlame3=full
             
             yesAverage1 = np.mean(yesFlame1)
-            if yesAverage1== "nan":
-                yesAverage1=1799.0
             yesAverage2 = np.mean(yesFlame2)
-            if yesAverage2== "nan":
-                yesAverage2=1799.0
             yesAverage3 = np.mean(yesFlame3)
-            if yesAverage3== "nan":
-                yesAverage3=1799.0
+
             
             lowestAverage=min(yesAverage1,yesAverage2,yesAverage3)
             
@@ -141,6 +145,12 @@ def calibration(state):
             if noAverage1 < lowestAverage *2 or noAverage2 < lowestAverage *2 or noAverage3 < lowestAverage*2 or len(yesFlame1)<40 or len(yesFlame2)<40 or len(yesFlame3)<40 or len(noFlame1)<40 or len(noFlame2)<40 or len(noFlame3)<40:
                 Cflag = 0 
                 state = 2
+                noFlame1 = []
+                noFlame2 = []
+                noFlame3 = []
+                yesFlame1 = []
+                yesFlame2 = []
+                yesFlame3 = []
                 print"problem"
  
             
