@@ -93,7 +93,7 @@ def center(driveCom, minAll, max1, max2, max3):
     centered=0                         #if program called, Jacques currently not centered
     while(centered==0):                #while not centered
             
-            
+        time.sleep(.3)
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
         Flame3reading = ADC.read_raw(Flame3)
@@ -107,115 +107,59 @@ def center(driveCom, minAll, max1, max2, max3):
         if(lowestFlame != ScaledFlame2):
             if (ScaledFlame3 == lowestFlame):
                 GPIO.output(Status1, GPIO.HIGH)
-                driveCom="D"             #turn left
+                driveCom="d"    #turn left
                 ser.write(driveCom)
-                driveCom="G"
-                ser.write(driveCom)
-                time.sleep(1)
+
             else:
-                driveCom="E"             #turn right
+                driveCom="e"             #turn right
                 GPIO.output(Status5, GPIO.HIGH)
                 ser.write(driveCom)
-                driveCom="G"
-                ser.write(driveCom)
-                time.sleep(1)
-            #ser.write(driveCom)
-            #print str(driveCom)
+
+
             
-        else:
+        elif(lowestFlame==ScaledFlame2 and driveCom!="G"):
             driveCom="G"
             ser.write(driveCom)
             #print str(driveCom)
             centered=1        #flame centered
         
-        #ser.write(driveCom)
-        
-        if driveCom=="F":
-            GPIO.output(Status2, GPIO.HIGH)
-            GPIO.output(Status4, GPIO.LOW)
-            GPIO.output(Status1, GPIO.LOW)
-            GPIO.output(Status3, GPIO.LOW)
-            GPIO.output(Status5, GPIO.LOW)
-        if driveCom=="C":
-            GPIO.output(Status4, GPIO.HIGH)
-            GPIO.output(Status2, GPIO.LOW)
-            GPIO.output(Status1, GPIO.LOW)
-            GPIO.output(Status3, GPIO.LOW)
-            GPIO.output(Status5, GPIO.LOW)
-        if driveCom=="D":
-            GPIO.output(Status1, GPIO.HIGH)
-            GPIO.output(Status5, GPIO.LOW)
-            GPIO.output(Status2, GPIO.LOW)
-            GPIO.output(Status3, GPIO.LOW)
-            GPIO.output(Status4, GPIO.LOW)
-        if driveCom=="E":
-            GPIO.output(Status5, GPIO.HIGH)
-            GPIO.output(Status1, GPIO.LOW)
-            GPIO.output(Status2, GPIO.LOW)
-            GPIO.output(Status3, GPIO.LOW)
-            GPIO.output(Status4, GPIO.LOW)
-        if driveCom=="G":
-            GPIO.output(Status3, GPIO.HIGH)
-            GPIO.output(Status1, GPIO.LOW)
-            GPIO.output(Status2, GPIO.LOW)
-            GPIO.output(Status4, GPIO.LOW)
-            GPIO.output(Status5, GPIO.LOW)
-            
-        
-    
     return centered             # centered?
         
     GPIO.cleanup()
     
-driveCom="G"
-ser.write(driveCom)
-#print driveCom
+def inchUp(position):
+    ready=0
+    while (position==0):
+        centered = center(driveCom, 130, 1799, 1799, 1799)          #Centering up robot
+        count=0
+        if centered ==1:
+            while count<4:
+                time.sleep(.3)
+                SonarC = readSonar(Ultra2T, Ultra2E)       #inch up to flame stand
+                if (SonarC<12-1):
+                    driveCom="f"
+                    ser.write(driveCom)
+                    ready=0
+                elif (SonarC>1+14):
+                    driveCom="c"
+                    ser.write(driveCom)
+                    ready=0
+                elif(driveCom!="G"):
+                    driveCom="G"
+                    ser.write(driveCom)
+                    ready=ready+1
+                count=count+1
+        if (ready>3):
+            position=1  
+    
+    return position
 
 centered=0
 
-while (1):
-    centered = center(driveCom, 130, 1799, 1799, 1799)          #Centering up robot
-    if centered ==1:
-        time.sleep(.01)
-        SonarC = readSonar(Ultra2T, Ultra2E)       #inch up to flame stand
-        if SonarC<1-10:
-            driveCom="F"
-        elif SonarC>1+10:
-            driveCom="C"
-        else:
-            driveCom="G"
-    
-    ser.write(driveCom)
-    #print driveCom
-    if driveCom=="F":
-        GPIO.output(Status2, GPIO.HIGH)
-        GPIO.output(Status4, GPIO.LOW)
-        GPIO.output(Status1, GPIO.LOW)
-        GPIO.output(Status3, GPIO.LOW)
-        GPIO.output(Status5, GPIO.LOW)
-    if driveCom=="C":
-        GPIO.output(Status4, GPIO.HIGH)
-        GPIO.output(Status2, GPIO.LOW)
-        GPIO.output(Status1, GPIO.LOW)
-        GPIO.output(Status3, GPIO.LOW)
-        GPIO.output(Status5, GPIO.LOW)
-    if driveCom=="D":
-        GPIO.output(Status1, GPIO.HIGH)
-        GPIO.output(Status5, GPIO.LOW)
-        GPIO.output(Status2, GPIO.LOW)
-        GPIO.output(Status3, GPIO.LOW)
-        GPIO.output(Status4, GPIO.LOW)
-    if driveCom=="E":
-        GPIO.output(Status5, GPIO.HIGH)
-        GPIO.output(Status1, GPIO.LOW)
-        GPIO.output(Status2, GPIO.LOW)
-        GPIO.output(Status3, GPIO.LOW)
-        GPIO.output(Status4, GPIO.LOW)
-    if driveCom=="G":
-        GPIO.output(Status3, GPIO.HIGH)
-        GPIO.output(Status1, GPIO.LOW)
-        GPIO.output(Status2, GPIO.LOW)
-        GPIO.output(Status4, GPIO.LOW)
-        GPIO.output(Status5, GPIO.LOW)
-    
-    #print SonarC
+
+
+while(1):
+    position=0
+    position=inchUp(position)
+    #if position=1:
+    print position
