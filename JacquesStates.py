@@ -102,15 +102,29 @@ def buttonStatus(buttonPin,state):    #takes in the button pin number and the cu
     return command
     
     
-state =0
+state =1
 while (1):
+    if ((state%2) != 0):
+        GPIO.output(Status1, GPIO.HIGH)
+        GPIO.output(Status2, GPIO.HIGH)            #LED pattern for Waiting robot
+        GPIO.output(Status3, GPIO.LOW)
+        GPIO.output(Status4, GPIO.HIGH)
+        GPIO.output(Status5, GPIO.HIGH)
+
 #    print state
     if GPIO.input(SButton) == 1:              # Launch manual state change
+        
+        GPIO.output(Status1, GPIO.LOW)
+        GPIO.output(Status2, GPIO.LOW)            #Turn off LEDs before changing status
+        GPIO.output(Status3, GPIO.LOW)
+        GPIO.output(Status4, GPIO.LOW)
+        GPIO.output(Status5, GPIO.LOW)
         state = buttonStatus(SButton,state)   #state 0=sleep, 2 = calibrate, 4 = search, 6 = position, 8=roast, 10 = return, 12=off, if button hit while sleep, will restart count and calibrate
-#    time.sleep(1)
+    
+    #time.sleep(1)
     if state ==2:
         GPIO.output(Status1, GPIO.HIGH)
-       # print "calibration begun"
+    #    print "calibration begun"
         Cresult = calibration.calibration(state) # returns: 'state':state, 'maxVal1': noAverage1, 'maxVal2':noAverage2,'maxVal3': noAverage3,'minVal1': yesAverage1,'minVal2': yesAverage2,'minVal3': noAverage3
         state= Cresult['state']
         max1= Cresult['maxVal1']
@@ -118,7 +132,6 @@ while (1):
         max3= Cresult['maxVal3']
         minAll= Cresult['minVal']
         minTherm = Cresult['minTherm']
-        print minTherm
         
         time.sleep(1)
         
@@ -126,7 +139,7 @@ while (1):
     if state == 4:
         GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.HIGH)
-        #print "searching for flame"
+        print "searching for flame"
         state=search.search(state, max1, max2, max3, minAll)
         time.sleep(1)
         
@@ -134,7 +147,7 @@ while (1):
     if state == 6:
         GPIO.output(Status2, GPIO.LOW)
         GPIO.output(Status3, GPIO.HIGH)
-        #print "positioning marshmallow"
+        print "positioning marshmallow"
         state=position.position(state, Status3, minTherm)
         time.sleep(1)
         
@@ -143,7 +156,7 @@ while (1):
         GPIO.output(Status3, GPIO.LOW)
         GPIO.output(Status4, GPIO.HIGH)
         print "roasting in progress"
-        #state= roasting.roasting(state)
+        state= roasting.roasting(state)
         time.sleep(1)
         
         #Return to master. End phase when arrived at master.
@@ -151,6 +164,7 @@ while (1):
         GPIO.output(Status4, GPIO.LOW)
         GPIO.output(Status5, GPIO.HIGH)
         print "roast complete, return now"
+        state=returnToMaster.returnToMaster(state)
         time.sleep(1)
         
         #End Program, enter sleep mode. 
