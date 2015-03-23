@@ -26,9 +26,9 @@ def position(state, Status3,  minTherm):
     
     # spinMallow=0                   #spin the mallow!
     # ser.write(spinMallow)
-    # time.sleep(.2)
-    # servoCom="Y"                #set servo to start position
-    # ser.write(servoCom) 
+    time.sleep(.2)
+    servoCom="Y"                #set servo to start position
+    ser.write(servoCom) 
     
     while state == 6:
         if (GPIO.input(SButton) == 1):
@@ -55,7 +55,7 @@ def position(state, Status3,  minTherm):
         servoCount = servoCount +1
         
         #if thermistor angle is where we want it
-        if(thermistor>(50+minTherm)):
+        if(thermistor>(70+minTherm)):
             state = 8    #allows for immediate state change to roasting
          
         
