@@ -38,10 +38,10 @@ def calibration(state):
     while (state== 2):
         
         #Blinks LED when waiting for calibration command
-        if(blinkCount<=1000):
+        if(blinkCount<=1400):
              GPIO.output(Status1, GPIO.HIGH)
              blinkCount = blinkCount+1
-        elif(1000<blinkCount<=2000):
+        elif(1400<blinkCount<=2800):
              GPIO.output(Status1, GPIO.LOW)
              blinkCount = blinkCount +1
         else:
@@ -90,10 +90,10 @@ def calibration(state):
             #reads a thermistor value
             nothermistor=ADC.read_raw(thermistor)
 
-            print "no"
-            print noAverage1
-            print noAverage2
-            print noAverage3
+            #print "no"
+            #print noAverage1
+            #print noAverage2
+            #print noAverage3
 
             #first collection complete. Flag for second collection
             Cflag=1
@@ -133,10 +133,10 @@ def calibration(state):
             lowestAverage=min(yesAverage1,yesAverage2,yesAverage3)
             
 
-            print "yes"
-            print yesAverage1
-            print yesAverage2
-            print yesAverage3
+            #print "yes"
+            #print yesAverage1
+            #print yesAverage2
+            #print yesAverage3
             
             
             
@@ -151,13 +151,14 @@ def calibration(state):
                 yesFlame1 = []
                 yesFlame2 = []
                 yesFlame3 = []
-                print"problem"
+                #print"problem"
  
             
             else:
                 state=4 #Program goes directly to search phase
                 print"ready to search!"
                 Cflag=2
+                GPIO.output(Status1, GPIO.LOW)
 
             
     return {'state':state, 'maxVal1': noAverage1, 'maxVal2' : noAverage2, 'maxVal3': noAverage3, 'minVal': lowestAverage, 'minTherm': nothermistor}
