@@ -123,12 +123,16 @@ def center(driveCom, minAll, max1, max2, max3):
             #print str(driveCom)
             centered=1        #flame centered
         
+        elif(lowestFlame==ScaledFlame2 and driveCom=="G"):
+            centered=1
+        
     return centered             # centered?
         
     GPIO.cleanup()
     
 def inchUp(position):
     ready=0
+    driveCom="G"
     while (position==0):
         centered = center(driveCom, 130, 1799, 1799, 1799)          #Centering up robot
         count=0
@@ -148,7 +152,11 @@ def inchUp(position):
                     driveCom="G"
                     ser.write(driveCom)
                     ready=ready+1
+                else:
+                    ready=ready+1
                 count=count+1
+                print ready
+                
         if (ready>3):
             position=1  
     
@@ -161,5 +169,5 @@ centered=0
 while(1):
     position=0
     position=inchUp(position)
-    #if position=1:
-    print position
+    if position==1:
+        print "position marshmallow!"
