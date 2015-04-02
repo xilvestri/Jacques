@@ -51,7 +51,7 @@ def calibration(state):
         if (GPIO.input(SButton) == 1):
             state = 3                                #return a state of 3 so manual state control can occur
         
-        #Collect flame sensor values when not near flame
+        #Collect flame sensor and thermistor values when not near flame
         if (GPIO.input(CButton) == 1 and Cflag == 0):
             #blink status LED quickly
             for x in range(0,50):
@@ -71,7 +71,7 @@ def calibration(state):
                 noFlame3 = noFlame3 + [Flame3reading]
 
             
-            #eliminate outliers if found
+            #eliminate outliers if found. If all values eliminated, robot is reading all ful distance signals and does not see the flame.
             noFlame1=[e for e in noFlame1 if (np.median(noFlame1)-2*np.std(noFlame1) < e <np.median(noFlame1) +2 * np.std(noFlame1))]
             if len(noFlame1)==0:
                 noFlame1=full
@@ -156,7 +156,6 @@ def calibration(state):
             
             else:
                 state=4 #Program goes directly to search phase
-                print"ready to search!"
                 Cflag=2
                 GPIO.output(Status1, GPIO.LOW)
 
