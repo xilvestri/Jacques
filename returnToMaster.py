@@ -34,6 +34,9 @@ blinkCount=0
 UART.setup("UART1")
 ser = serial.Serial(port = "/dev/ttyO1", baudrate = 9600)
 
+#=================return to Master================
+#  Backs up until obstacle found. Stops and signals
+#  mission success!
 def returnToMaster(state):
     here=0                           #not back to master now
     blinkCount=0
