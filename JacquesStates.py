@@ -10,10 +10,10 @@ import returnToMaster
 
 
 #---------Status LEDs---------
-Status1="P8_11" 
-Status2="P8_12"
-Status3="P8_13"
-Status4="P8_14"
+Status1="P8_12" 
+Status2="P8_11"
+Status3="P8_14"
+Status4="P8_13"
 Status5="P8_17"
 
 #--------State Button---------
@@ -70,33 +70,29 @@ def buttonStatus(buttonPin,state):    #takes in the button pin number and the cu
 
         elif length <= 4:                            #Search phase entered. Lights corresponding state light up.
             command = 4                              #Stores a command for the exit state.
-#            print "search"
             GPIO.output(Status1, GPIO.LOW)
             GPIO.output(Status2, GPIO.HIGH)
 
         elif length <= 6:                            #position phase entered. Lights corresponding state light up.
             command = 6                              #Stores a command for the exit state.
-#            print "position"
             GPIO.output(Status2, GPIO.LOW)
             GPIO.output(Status3, GPIO.HIGH)
 
         elif length <= 8:                            #roast phase entered. Lights corresponding state light up.
             command = 8                              #Stores a command for the exit state.
-#            print "roast"
             GPIO.output(Status3, GPIO.LOW)
             GPIO.output(Status4, GPIO.HIGH)
 
         elif length <= 10:                            #return phase entered. Lights corresponding state light up.
             command = 10                              #Stores a command for the exit state.
-#            print "return"
             GPIO.output(Status4, GPIO.LOW)
             GPIO.output(Status5, GPIO.HIGH)
+        
         elif length >10:                              #end phase entered. Lights corresponding state light up.
             command = 12                              #Stores a command for the exit state.
-#            print "off"
             GPIO.output(Status5, GPIO.LOW)
             
-        if GPIO.input(buttonPin) == 0:                #sets a buttonOff time that exits the loop
+        if GPIO.input(buttonPin) == 0:                #sets a button/Off time that exits the loop
             signaloff= time.time()
 
     return command
@@ -139,7 +135,7 @@ while (1):
     if state == 4:
         GPIO.output(Status1, GPIO.LOW)
         GPIO.output(Status2, GPIO.HIGH)
-        print "searching for flame"
+        #print "searching for flame"
         state=search.search(state, max1, max2, max3, minAll)
         time.sleep(1)
         
@@ -147,7 +143,7 @@ while (1):
     if state == 6:
         GPIO.output(Status2, GPIO.LOW)
         GPIO.output(Status3, GPIO.HIGH)
-        print "positioning marshmallow"
+        #print "positioning marshmallow"
         state=position.position(state, Status3, minTherm)
         time.sleep(1)
         
@@ -155,7 +151,7 @@ while (1):
     if state == 8:
         GPIO.output(Status3, GPIO.LOW)
         GPIO.output(Status4, GPIO.HIGH)
-        print "roasting in progress"
+        #print "roasting in progress"
         state= roasting.roasting(state)
         time.sleep(1)
         
@@ -163,11 +159,11 @@ while (1):
     if state == 10:
         GPIO.output(Status4, GPIO.LOW)
         GPIO.output(Status5, GPIO.HIGH)
-        print "roast complete, return now"
+        #print "roast complete, return now"
         state=returnToMaster.returnToMaster(state)
         time.sleep(1)
         
         #End Program, enter sleep mode. 
     if state == 12:
         GPIO.output(Status5, GPIO.LOW)
-        print "sleep mode"
+        #print "sleep mode"
