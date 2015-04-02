@@ -43,16 +43,21 @@ GPIO.output(Ultra2T, GPIO.LOW)
 GPIO.output(Ultra3T, GPIO.LOW)
 GPIO.output(Ultra4T, GPIO.LOW)
 
+#==============Initiates communication to TRex===========================
 UART.setup("UART1")
 ser = serial.Serial(port = "/dev/ttyO1", baudrate = 9600)
 
 ser.open()
 
+#===============Blink Speed Constants ====================================
+
 normalBlink = 700
 problemBlink = 400
 runBlink = 1200
 
-
+#===============translate===============================================
+#   Takes a number within an expected range, and maps it to another range
+#   Found on stack exchage
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
@@ -64,6 +69,8 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
 
+#===============readSonar===============================================
+#   Takes a reading from a sonar sensor
 def readSonar(sensorTrig, sensorEcho):
     start=time.time()
     signaloff=0
@@ -86,7 +93,11 @@ def readSonar(sensorTrig, sensorEcho):
     return distance
         
     GPIO.cleanup()
-    
+
+#===============readFlames===============================================
+#   Similar to the calibrate phase, takes an average of a set of readings and
+#   provides that average as an overall reading. Alloes for a running average
+#   to smooth out spiking readings
 def readFlames(Flame1, Flame2, Flame3):
     sample1 = []
     sample2 = []
@@ -124,14 +135,18 @@ def readFlames(Flame1, Flame2, Flame3):
     read3 = np.mean(sample3)
     
     return {'FlameRead1':read1, 'FlameRead2':read2, 'FlameRead3':read3}
-    
+
+#===============center===============================================
+#   incrementally turns robot toward a flame until it is head on  
 def center(driveCom, minAll, max1, max2, max3):
     blinkCount=0
     count = 0
     centered=0                         #if program called, Jacques currently not centered
     while(centered==0):                #while not centered
-            
+        
+        #wait for readings to level out    
         time.sleep(.3)
+        #read flame sensors
         Flame1reading = ADC.read_raw(Flame1)
         Flame2reading = ADC.read_raw(Flame2)
         Flame3reading = ADC.read_raw(Flame3)
@@ -144,32 +159,35 @@ def center(driveCom, minAll, max1, max2, max3):
         #Check to be sure flame is, in fact, not centered
         if(lowestFlame != ScaledFlame2):
             if (ScaledFlame3 == lowestFlame):
-                #GPIO.output(Status1, GPIO.HIGH)
                 driveCom="d"    #turn left
                 ser.write(driveCom)
 
             else:
                 driveCom="e"             #turn right
-                #GPIO.output(Status5, GPIO.HIGH)
                 ser.write(driveCom)
 
-
-            
+        #if flame is cetered and it isn't stopped
         elif(lowestFlame==ScaledFlame2 and driveCom!="G"):
             driveCom="G"
             ser.write(driveCom)
-            #print str(driveCom)
             centered=1        #flame centered
         
+        #if flame is cetered and it is stopped
         elif(lowestFlame==ScaledFlame2 and driveCom=="G"):
             centered=1
         
     return centered             # centered?
         
     GPIO.cleanup()
-    
+
+#===============inchUp===============================================
+#   Called when robot is within a short distance from the flame. Allows for incremented
+#   turning and incremented adjustments forward and backward until the marshmallow is
+#   within range of the marshmallow chaft
 def inchUp(position, minAll, max1, max2, max3):
+    #reset marker to determine if properlly positioned
     ready=0
+    #stop robot just in case
     driveCom="G"
     ser.write(driveCom)
     while (position==0):
@@ -178,15 +196,21 @@ def inchUp(position, minAll, max1, max2, max3):
         if centered ==1:
             while count<4:
                 time.sleep(.3)
-                SonarC = readSonar(Ultra2T, Ultra2E)       #inch up to flame stand
+                SonarC = readSonar(Ultra2T, Ultra2E)       #determine current distance from flame
+                
+                #if too close, back up
                 if (SonarC<12-1):
                     driveCom="f"
                     ser.write(driveCom)
                     ready=0
+                
+                #if too far, inch forward
                 elif (SonarC>1+14):
                     driveCom="c"
                     ser.write(driveCom)
                     ready=0
+                    
+                #if just right, go ahead and stop
                 elif(driveCom!="G"):
                     driveCom="G"
                     ser.write(driveCom)
@@ -194,16 +218,20 @@ def inchUp(position, minAll, max1, max2, max3):
                 else:
                     ready=ready+1
                 count=count+1
-                print ready
-                
+                #print ready
+        
+        #if correct proximity is determined enough times, begin positioning marshmallow        
         if (ready>3):
             position=1  
     
     return position
 
-
+#===============search===============================================
+#   Comprises of all behaviors that enable a robot to drive toward
+#   a flame, and ceter itself onto it at a relatively consistant distance
 def search(state, max1, max2, max3, minAll):
     
+    # relative distance based on calibration
     farval= 50
     medval=30
     closeval=16
@@ -253,6 +281,7 @@ def search(state, max1, max2, max3, minAll):
                 
                 #print str(driveCom)
                 
+                #Read flame sensors
                 FlameRead = readFlames(Flame1, Flame2, Flame3) 
                 flame1= FlameRead['FlameRead1']
                 flame2= FlameRead['FlameRead2']
@@ -266,15 +295,15 @@ def search(state, max1, max2, max3, minAll):
                 # print(ScaledFlame2)
                 # print(ScaledFlame3) 
 
-                # time.sleep(.01)
-
+                #compare lowest flame against what is deemed as "close" Begin inching up in this range
                 lowestFlame = min(ScaledFlame1, ScaledFlame2, ScaledFlame3)
                 if lowestFlame< closeval:
                     position=inchUp(0, minAll, max1, max2, max3)
                     if position==1:
                         state=6
                         GPIO.output(Status2, GPIO.LOW)
-            #-----------------------------------------------------------------------comment out when no ultras present 
+                        
+            #-------determining proximity 
                 if lowestFlame >= closeval:
                     SonarR = readSonar(Ultra4T, Ultra4E)
                     SonarL= readSonar(Ultra3T, Ultra3E)
@@ -305,6 +334,9 @@ def search(state, max1, max2, max3, minAll):
                             GPIO.output(Status3, GPIO.LOW)
                             GPIO.output(Status4, GPIO.LOW)
                             GPIO.output(Status5, GPIO.HIGH)
+                            
+                            #check if object removed
+                            time.sleep(.04)
                             SonarR = readSonar(Ultra4T, Ultra4E)
                             SonarL= readSonar(Ultra3T, Ultra3E)
                             SonarC = readSonar(Ultra2T, Ultra2E)
@@ -313,20 +345,21 @@ def search(state, max1, max2, max3, minAll):
                             if (lowest > 25):
                                 thing=0
                                 GPIO.output(Status1, GPIO.LOW)
-                                GPIO.output(Status2, GPIO.LOW)            #LED pattern for thing in way
+                                GPIO.output(Status2, GPIO.LOW)            #erase LED pattern
                                 GPIO.output(Status3, GPIO.LOW)
                                 GPIO.output(Status4, GPIO.LOW)
                                 GPIO.output(Status5, GPIO.LOW)
             
             
                 #------------------------------------------------------------------comment out when no ultras present
-            
-                if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        #if the flame isn't too close or too far, flame sensors should have a large difference between sides
-                    newDrive="G"
-                    if (newDrive !=driveCom):
-                        driveCom=newDrive
-                        ser.write(driveCom)
-                    centered = center(driveCom, minAll, max1, max2, max3)
+                
+                #if the flame isn't too close or too far, flame sensors should have a large difference between sides
+                # if ((closeval<=lowestFlame<=farval) and (lowestFlame != ScaledFlame2)  ):        
+                #     newDrive="G"
+                #     if (newDrive !=driveCom):
+                #         driveCom=newDrive
+                #         ser.write(driveCom)
+                #     centered = center(driveCom, minAll, max1, max2, max3)
                     
 
                 #print("lowest: " + str(lowestFlame))
