@@ -4,12 +4,21 @@ import Adafruit_BBIO.GPIO as GPIO
 import time
 import Adafruit_BBIO.UART as UART
 import serial
+import Adafruit_BBIO.PWM as PWM
+
+motorPWM= "P8_19"
+motorA="P8_20"
+motorB="P8_21"
+pot = "P9_33"
+
+GPIO.setup(motorA,GPIO.OUT)
+GPIO.setup(motorB,GPIO.OUT)
 
 
 Flame1 = "P9_40"
 Flame2 = "P9_38"
 Flame3 = "P9_36"
-Status4="P8_14"
+Status4="P8_13"
 RButton= "P8_18"
 SButton= "P8_10"
 probe = 'P9_37'
@@ -41,6 +50,11 @@ def roasting(state):
             state = 10     #allows for immediate state change to return state
             servoCom="Y"                #set servo to start position
             ser.write(servoCom)
+            
+            #stop the mallow!
+            GPIO.output(motorA, GPIO.LOW)
+            GPIO.output(motorB, GPIO.LOW)
+            PWM.set_duty_cycle(motorPWM, (0))
             GPIO.output(Status4, GPIO.LOW)
             # pinMallow="b"                   #stop the mallow!
             # ser.write(spinMallow)
